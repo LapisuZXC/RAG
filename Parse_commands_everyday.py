@@ -7,12 +7,12 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium_stealth import stealth
 import os
 import pandas as pd
-import time
 
 # URL страницы
 URL = 'https://www.hltv.org/ranking/teams'
 # Путь файла записи
 output_file = "Data/team_ranking.csv"
+
 
 def setup_selenium() -> "driver":
     # Настройка Selenium
@@ -51,18 +51,7 @@ def await_of_load() -> bool:
         return False
 
 
-def parse_ranking_due_date(year_from: int, year_to: int) -> [str]:
-    urls = []
-    months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
-    for cur_year in range(year_from, year_to+1):
-        for month in months:
-            for date in range(1, 32):
-                urls.append(f"/{cur_year}/{month}/{date}")
-
-    return urls
-
-
-def extract_data(url: str) -> [str]:
+def extract_data(url: str) -> [str]:  # TODO написать функцию для парсинга
     [_, cur_year, cur_month, cur_date] = url.split('/')
     data = {
             "Year": [],
@@ -174,7 +163,6 @@ def write_links(output_file: str, data: {str}) -> None:
 
 """----------------Main function----------------"""
 
-#write_links(output_file, cr_data)
 
 #df = pd.read_csv(output_file)   
 
@@ -186,30 +174,28 @@ def write_links(output_file: str, data: {str}) -> None:
 
 
 if True:
+    
+    months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+    cur_year = input()
+    cur_month = int(input())
+    date = input()
 
-    urls = parse_ranking_due_date(2023, 2024)
+    cur_url = f"/{cur_year}/{months[cur_month]}/{date}"
+    
+    try:
+        driver = setup_selenium()
+        driver.get(str(URL + cur_url))
+        await_of_load()
+        isValid = await_of_load()
 
-    for cur_url in urls:
-        try:
-            driver = setup_selenium()
-            print("URL", str(URL + cur_url))
-            driver.get(str(URL + cur_url))
-            # driver.get('https://www.hltv.org/ranking/teams/2023/january/2')
-            isValid = await_of_load()
+        if isValid:
+            print("Today is a perfect day")
+            cur_data = extract_data(cur_url)
+            write_links(output_file, cur_data)
 
-            if isValid:
-                print("Valid day", cur_url)
-                cur_data = extract_data(cur_url)
-                write_links(output_file, cur_data)
+        driver.quit()
 
-            print(f"{isValid=}")
-
-            driver.quit()
-
-            #time.sleep(0.5)
-
-        except Exception as e:
-            print(e)
+    except Exception as e:
+        print(e)
 
     driver.quit()
-
