@@ -7,7 +7,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium_stealth import stealth
 import os
 import pandas as pd
-import time
 
 # URL страницы
 URL = 'https://www.hltv.org/ranking/teams'
@@ -174,17 +173,6 @@ def write_links(output_file: str, data: {str}) -> None:
 
 """----------------Main function----------------"""
 
-#write_links(output_file, cr_data)
-
-#df = pd.read_csv(output_file)   
-
-# Display all data
-#print(df)
-
-
-
-
-
 if True:
 
     urls = parse_ranking_due_date(2023, 2024)
@@ -194,7 +182,6 @@ if True:
             driver = setup_selenium()
             print("URL", str(URL + cur_url))
             driver.get(str(URL + cur_url))
-            # driver.get('https://www.hltv.org/ranking/teams/2023/january/2')
             isValid = await_of_load()
 
             if isValid:
@@ -205,8 +192,6 @@ if True:
             print(f"{isValid=}")
 
             driver.quit()
-
-            #time.sleep(0.5)
 
         except Exception as e:
             print(e)

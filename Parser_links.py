@@ -9,12 +9,11 @@ import os
 
 
 # URL страницы
-url_test = 'https://www.hltv.org/stats/players?startDate=2025-02-08&endDate=2025-03-08&maps=de_dust2&rankingFilter=Top5'
 url = 'https://www.hltv.org/stats/players'
 # Путь файла записи
 output_file = "Data/links.txt"
 # Количество ссылок для парсинга
-amount_of_players = 203
+amount_of_players = 200
 
 
 # Настройка Selenium
@@ -63,7 +62,6 @@ def extract_links(amount_to_parse: int) -> [str]:
             link = element.get_attribute('href')
             if link:  # Проверяем, что ссылка не пустая
                 links.append(link)
-                # print(f"Найдена ссылка: {link}")
             else:
                 print(f"Ссылка не найдена в элементе по селектору: {selector}")
         except Exception as e:

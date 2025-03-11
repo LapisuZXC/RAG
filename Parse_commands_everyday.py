@@ -7,6 +7,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium_stealth import stealth
 import os
 import pandas as pd
+from datetime import datetime
+
 
 # URL страницы
 URL = 'https://www.hltv.org/ranking/teams'
@@ -163,25 +165,17 @@ def write_links(output_file: str, data: {str}) -> None:
 
 """----------------Main function----------------"""
 
-
-#df = pd.read_csv(output_file)   
-
-# Display all data
-#print(df)
-
-
-
-
-
 if True:
-    
+    cur_year = datetime.today().strftime('%Y')
+    cur_month = int(datetime.today().strftime('%m'))
+    cur_date = datetime.today().strftime('%d')
     months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
-    cur_year = input()
-    cur_month = int(input())
-    date = input()
+    #cur_year = input()
+    #cur_month = int(input())
+    #cur_date = input()
 
-    cur_url = f"/{cur_year}/{months[cur_month]}/{date}"
-    
+    cur_url = f"/{cur_year}/{months[cur_month-1]}/{cur_date}"
+    print(cur_url)
     try:
         driver = setup_selenium()
         driver.get(str(URL + cur_url))
