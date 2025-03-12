@@ -1,0 +1,8 @@
+Include/
+Lib/
+Scripts/
+pyvenv.cfg
+__pycache__/
+venv/
+Data/team_ranking.csv
+Parser_links.py
