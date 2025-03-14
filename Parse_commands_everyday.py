@@ -3,30 +3,28 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium_stealth import stealth
 import os
 import pandas as pd
 from datetime import datetime
-
+from util.setup_selenium import setup_selenium
 
 # URL страницы
-URL = 'https://www.hltv.org/ranking/teams'
+URL = "https://www.hltv.org/ranking/teams"
 # Путь файла записи
 output_file = "Data/team_ranking.csv"
 
 
 def setup_selenium() -> "driver":
     # Настройка Selenium
+
+    driver_path = "/usr/bin/chromedriver"
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless')  # Запуск в фоновом режиме
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-
-    # Инициализация драйвера
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    driver = webdriver.Chrome(service=Service(driver_path), options=options)
 
     # Настройка Selenium Stealth
     stealth(
@@ -44,78 +42,108 @@ def setup_selenium() -> "driver":
 def await_of_load() -> bool:
     try:
         WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking")))
+            EC.presence_of_element_located(
+                (
+                    By.CSS_SELECTOR,
+                    "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking",
+                )
+            )
+        )
         print("Таблица загружена.")
         return True
-    
+
     except Exception as e:
         print(f"Ошибка при загрузке таблицы: {e}")
         return False
 
 
-def extract_data(url: str) -> [str]:  # TODO написать функцию для парсинга
-    [_, cur_year, cur_month, cur_date] = url.split('/')
+def extract_data(url):  # TODO написать функцию для парсинга
+    [_, cur_year, cur_month, cur_date] = url.split("/")
     data = {
-            "Year": [],
-            "Month": [],
-            "Date": [],
-            "Rank": [],
-            "Name_of_team": [],
-            "Members": [],
-            "Link": []
+        "Year": [],
+        "Month": [],
+        "Date": [],
+        "Rank": [],
+        "Name_of_team": [],
+        "Members": [],
+        "Link": [],
     }
     try:
         # Locate all parent elements
-        parent_elements = driver.find_elements(By.CSS_SELECTOR, "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking > div:nth-child(1) > div")
+        parent_elements = driver.find_elements(
+            By.CSS_SELECTOR,
+            "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking > div:nth-child(1) > div",
+        )
         # Loop through each parent element
         for index, parent_element in enumerate(parent_elements, start=1):
             if index < 4:
                 continue
             try:
-
-                child_element_position = parent_element.find_element(By.CSS_SELECTOR, "div > div.ranking-header > span.position")
-                child_element_team_link = parent_element.find_element(By.CSS_SELECTOR, "div > div.lineup-con > div > a:nth-child(1)")
+                child_element_position = parent_element.find_element(
+                    By.CSS_SELECTOR, "div > div.ranking-header > span.position"
+                )
+                child_element_team_link = parent_element.find_element(
+                    By.CSS_SELECTOR, "div > div.lineup-con > div > a:nth-child(1)"
+                )
                 try:
-                    child_element_team_name = parent_element.find_element(By.CSS_SELECTOR, "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers.teamLineExpanded > span.name")
+                    child_element_team_name = parent_element.find_element(
+                        By.CSS_SELECTOR,
+                        "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers.teamLineExpanded > span.name",
+                    )
                 except:
-                    child_element_team_name = parent_element.find_element(By.CSS_SELECTOR, "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers > span.name")
-                
+                    child_element_team_name = parent_element.find_element(
+                        By.CSS_SELECTOR,
+                        "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers > span.name",
+                    )
 
                 position = child_element_position.text
                 team_name = child_element_team_name.text
                 link_team = child_element_team_link.get_attribute("href")
-                
 
-
-                elements_players = parent_element.find_elements(By.CSS_SELECTOR, "div > div.lineup-con > table > tbody > tr > td")
+                elements_players = parent_element.find_elements(
+                    By.CSS_SELECTOR, "div > div.lineup-con > table > tbody > tr > td"
+                )
                 # Count the number of players
                 count_of_players = len(elements_players)
                 player_links = []
                 player_names = []
                 for i in range(count_of_players):
                     try:
-                        cur_player = parent_element.find_element(By.CSS_SELECTOR, f"div > div.lineup-con > table > tbody > tr > td:nth-child({i+1}) > a")
+                        cur_player = parent_element.find_element(
+                            By.CSS_SELECTOR,
+                            f"div > div.lineup-con > table > tbody > tr > td:nth-child({
+                                i + 1
+                            }) > a",
+                        )
                     except:
-                        cur_player = parent_element.find_element(By.CSS_SELECTOR, f"div > div.lineup-con.hidden > table > tbody > tr > td:nth-child({i+1}) > a")
+                        cur_player = parent_element.find_element(
+                            By.CSS_SELECTOR,
+                            f"div > div.lineup-con.hidden > table > tbody > tr > td:nth-child({
+                                i + 1
+                            }) > a",
+                        )
                     player_links.append(cur_player.get_attribute("href"))
-                    cur_player = cur_player.find_element(By.CSS_SELECTOR, "img")
+                    cur_player = cur_player.find_element(
+                        By.CSS_SELECTOR, "img")
                     player_names.append(cur_player.get_attribute("alt"))
 
                 player_dict = {}
-                for i, (link, name) in enumerate(zip(player_links, player_names), start=1):
+                for i, (link, name) in enumerate(
+                    zip(player_links, player_names), start=1
+                ):
                     key1 = f"Name_player{i}"
                     player_dict[key1] = name
                     key2 = f"Link_player{i}"
                     player_dict[key2] = link
 
                 data_one = {
-                        "Year": [cur_year],
-                        "Month": [cur_month],
-                        "Date": [cur_date],
-                        "Rank": [position],
-                        "Name_of_team": [team_name],
-                        "Members": [player_dict],
-                        "Link": [link_team]
+                    "Year": cur_year,
+                    "Month": cur_month,
+                    "Date": cur_date,
+                    "Rank": position,
+                    "Name_of_team": team_name,
+                    "Members": player_dict,
+                    "Link": link_team,
                 }
 
                 # print(f"  {position=}")
@@ -124,24 +152,23 @@ def extract_data(url: str) -> [str]:  # TODO написать функцию д�
                 # print(f"  {count_of_players=}")
                 # print(player_links)
                 # print(player_names)
-                
+
                 for key in data.keys():
                     if key in data_one:
                         data[key].append(data_one[key])
                     else:
-                        data[key].append(None) 
-
+                        data[key].append(None)
 
             except Exception as e:
                 print(e)
 
     except Exception as e:
-        print(f"Ошибка при извлечении ссылки по селектору {"selector"}: {e}")
+        print(f"Ошибка при извлечении ссылки по селектору {'selector'}: {e}")
 
     return data
 
 
-def write_links(output_file: str, data: {str}) -> None:
+def write_links(output_file, data):
     if not os.path.exists(output_file):
         imp_data = {
             "Year": [],
@@ -150,7 +177,7 @@ def write_links(output_file: str, data: {str}) -> None:
             "Rank": [],
             "Name_of_team": [],
             "Members": [],
-            "Link": []
+            "Link": [],
         }
         data_frame = pd.DataFrame(imp_data)
         data_frame.to_csv(output_file, index=False)
@@ -159,22 +186,31 @@ def write_links(output_file: str, data: {str}) -> None:
     print(f"Data written to {output_file}")
 
 
-
-
-
-
 """----------------Main function----------------"""
 
-if True:
-    cur_year = datetime.today().strftime('%Y')
-    cur_month = int(datetime.today().strftime('%m'))
-    cur_date = datetime.today().strftime('%d')
-    months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
-    #cur_year = input()
-    #cur_month = int(input())
-    #cur_date = input()
+if __name__ == "__main__":
+    cur_year = datetime.today().strftime("%Y")
+    cur_month = int(datetime.today().strftime("%m"))
+    cur_date = datetime.today().strftime("%d")
+    months = [
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
+    ]
+    # cur_year = input()
+    # cur_month = int(input())
+    # cur_date = input()
 
-    cur_url = f"/{cur_year}/{months[cur_month-1]}/{cur_date}"
+    cur_url = f"/{cur_year}/{months[cur_month - 1]}/{cur_date}"
     print(cur_url)
     try:
         driver = setup_selenium()
