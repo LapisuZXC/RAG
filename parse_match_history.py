@@ -6,10 +6,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium_stealth import stealth
 import pandas as pd
-from Parse_commands_everyday import setup_selenium
+from util.setup_selenium import setup_selenium
+from util.datetime_util import get_date_range
 
+TIME_FILTER = get_date_range()
 def parse_team_matches(team_id, team_name, driver):
-    url = f"https://www.hltv.org/stats/teams/matches/{team_id}/{team_name}"
+    #G2,5995
+    #"https://www.hltv.org/stats/teams/matches/5995/G2
+    url = f"https://www.hltv.org/stats/teams/matches/{team_id}/{team_name}" + "?" + TIME_FILTER
     driver.get(url)
     
     WebDriverWait(driver, 5).until(
@@ -22,7 +26,7 @@ def parse_team_matches(team_id, team_name, driver):
     current_event = None
     for row in rows:
         classes = row.get_attribute("class").split()
-
+        ###!!!!
         if "first" in classes:
             cells = row.find_elements(By.TAG_NAME, "td")
             date = cells[0].text.strip()

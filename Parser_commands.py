@@ -8,29 +8,23 @@ from selenium_stealth import stealth
 import os
 import pandas as pd
 from util.setup_selenium import setup_selenium
-
+import random
 # URL страницы
 URL = "https://www.hltv.org/ranking/teams"
 # Путь файла записи
 output_file = "Data/team_ranking.csv"
 
 
-def await_of_load() -> bool:
+def await_of_load(driver):
     try:
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located(
-                (
-                    By.CSS_SELECTOR,
-                    "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking",
-                )
-            )
+        WebDriverWait(driver, random.randint(5,10)).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking"))
         )
-        print("Таблица загружена.")
         return True
-
     except Exception as e:
-        print(f"Ошибка при загрузке таблицы: {e}")
+        print(f"Ошибка при загрузке страницы: {e}")
         return False
+
 
 
 def parse_ranking_due_date(year_from: int, year_to: int) -> [str]:
@@ -55,8 +49,8 @@ def parse_ranking_due_date(year_from: int, year_to: int) -> [str]:
                 urls.append(f"/{cur_year}/{month}/{date}")
 
     return urls
-
-
+#body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking > div:nth-child(1) > div:nth-child(4) > div > div.lineup-con > div > a:nth-child(1)
+#body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking > div:nth-child(1) > div:nth-child(5) > div > div.lineup-con.hidden > div > a:nth-child(1)
 def extract_data(url: str) -> [str]:
     [_, cur_year, cur_month, cur_date] = url.split("/")
     data = {
@@ -111,19 +105,16 @@ def extract_data(url: str) -> [str]:
                     try:
                         cur_player = parent_element.find_element(
                             By.CSS_SELECTOR,
-                            f"div > div.lineup-con > table > tbody > tr > td:nth-child({
-                                i + 1
-                            }) > a",
+                            f"div > div.lineup-con > table > tbody > tr > td:nth-child({i + 1}) > a",
                         )
                     except:
                         cur_player = parent_element.find_element(
                             By.CSS_SELECTOR,
-                            f"div > div.lineup-con.hidden > table > tbody > tr > td:nth-child({
-                                i + 1
-                            }) > a",
+                            f"div > div.lineup-con.hidden > table > tbody > tr > td:nth-child({i + 1}) > a",
                         )
                     player_links.append(cur_player.get_attribute("href"))
-                    cur_player = cur_player.find_element(By.CSS_SELECTOR, "img")
+                    cur_player = cur_player.find_element(
+                        By.CSS_SELECTOR, "img")
                     player_names.append(cur_player.get_attribute("alt"))
 
                 player_dict = {}
@@ -194,7 +185,7 @@ if True:
         try:
             print("URL", str(URL + cur_url))
             driver.get(str(URL + cur_url))
-            isValid = await_of_load()
+            isValid = await_of_load(driver)
 
             if isValid:
                 print("Valid day", cur_url)

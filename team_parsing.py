@@ -1,194 +1,112 @@
-import os
-import csv
-import json
-import re
-
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium_stealth import stealth
+from selenium.webdriver.support import expected_conditions as EC
+import os
+import pandas as pd
+from util.setup_selenium import setup_selenium
+import random
+from datetime import datetime, timedelta
 
-from util.datetime_util import get_date_range
+URL = "https://www.hltv.org/ranking/teams"
+OUTPUT_FILE = "Data/team_ranking.csv"
 
-chromium_binary_path = "/usr/bin/chromium"
-
-chromedriver_path = "/usr/bin/chromedriver"
-
-service = Service(chromedriver_path)
-
-options = webdriver.ChromeOptions()
-
-options.binary_location = chromium_binary_path
-
-options.add_argument("--headless")  # Запуск без UI
-
-options.add_argument("--disable-blink-features=AutomationControlled")
-
-options.add_argument("--no-sandbox")
-
-options.add_argument("--disable-dev-shm-usage")
-
-driver = webdriver.Chrome(service=service, options=options)
-
-stealth(
-    driver,
-    languages=["en-US", "en"],
-    vendor="Google Inc.",
-    platform="Linux",
-    webgl_vendor="Intel Inc.",
-    renderer="Intel Iris OpenGL Engine",
-    fix_hairline=True,
-)
-base_url = "https://www.hltv.org/stats/teams"
-
-
-time_filter = get_date_range()
-
-
-rankign_filter = "rankingFilter=Top50"
-
-top_50_url = base_url + "?" + time_filter + "&" + rankign_filter
-
-driver.get(top_50_url)
-
-
-def get_top_50_teams() -> list[dict[str, str]]:
-    """
-    Формат, в котором сохраняются команды:
-        {
-        "Team": "*Название команды*",
-        "id": "*Айдишник*",
-        "Maps": "*Число мап*",
-        "K-D Diff": "*+- КД дифф*",
-        "K/D": "*КД*",
-        "Rating\n2.1": "*Рейтинг*"
-        }
-
-        Пример:
-        {
-        "Team": "Spirit",
-        "id": "7020",
-        "Maps": "43",
-        "K-D Diff": "+518",
-        "K/D": "1.19",
-        "Rating\n2.1": "1.16"
-        }
-
-    Функция возвращает массив вот таких объектов.
-    """
+def await_load(driver):
     try:
-        # Ожидание загрузки таблицы
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, ".stats-table"))
+        WebDriverWait(driver, random.randint(5, 10)).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "div.ranking"))
         )
-
-        # Извлекаем заголовки столбцов
-        headers = [
-            th.text.strip()
-            for th in driver.find_elements(By.CSS_SELECTOR, "thead th")
-            if th.text.strip()
-        ]
-
-        # Добавляем новый заголовок для ID команды
-        headers.insert(1, "id")
-
-        # Ищем все строки с данными (пропускаем заголовок)
-        rows = driver.find_elements(By.CSS_SELECTOR, "tbody tr")
-
-        teams_data = []
-
-        for i, row in enumerate(rows):
-            if i > 49:
-                break
-            try:
-                # Ищем ячейки
-                cells = row.find_elements(By.CSS_SELECTOR, "td")
-
-                # Извлекаем ссылку команды
-                team_link_element = row.find_element(
-                    By.CSS_SELECTOR, "td.teamCol-teams-overview a"
-                )
-                team_href = (
-                    team_link_element.get_attribute("href")
-                    if team_link_element
-                    else None
-                )
-
-                # Проверяем, есть ли у элемента ссылка
-                if team_href is None:
-                    print(
-                        f"⚠️ Предупреждение: Ссылка не найдена в строке {i + 1}")
-                    team_id = "unknown"
-                else:
-                    # Ищем ID с помощью регулярного выражения
-                    re_match = re.search(r"/teams/(\d+)/", team_href)
-                    team_id = re_match.group(1) if re_match else "unknown"
-
-                # Вставляем ID в начало списка данных
-                team_data = (
-                    [cells[0].text.strip()]
-                    + [team_id]
-                    + [cell.text.strip() for cell in cells[1:]]
-                )
-
-                # Создаём словарь
-                team_info = {headers[j]: team_data[j]
-                             for j in range(len(headers))}
-                teams_data.append(team_info)
-
-            except Exception as e:
-                print(f"❌ Ошибка в строке {i + 1}: {e}")
-
-        return teams_data
-
+        return True
     except Exception as e:
-        print("Ошибка:", e)
-        return []
+        print(f"Ошибка при загрузке страницы: {e}")
+        return False
 
+def generate_urls(start_date, end_date):
+    urls = []
+    current_date = start_date
+    while current_date <= end_date:
+        url = f"/{current_date.year}/{current_date.strftime('%B').lower()}/{current_date.day}"
+        urls.append(url)
+        current_date += timedelta(days=7)  # Шаг в 7 дней
+    return urls
 
-def json_to_csv(json_data, csv_filename):
-    if not json_data:
-        print("⚠️ Пустые данные, CSV не создан.")
-        return
-
-    # Создаем директорию, если её нет
-    os.makedirs("Data", exist_ok=True)
-
-    # Полный путь к файлу
-    csv_filepath = os.path.join("Data", csv_filename)
-
-    # Определяем заголовки CSV на основе ключей первого элемента
-    headers = json_data[0].keys()
-
+def extract_data(driver, url):
+    _, year, month, day = url.split("/")
+    data = {
+        "Year": [],
+        "Month": [],
+        "Date": [],
+        "Rank": [],
+        "Name_of_team": [],
+        "Members": [],
+        "Link": [],
+    }
     try:
-        with open(csv_filepath, mode="w", newline="", encoding="utf-8") as file:
-            writer = csv.DictWriter(file, fieldnames=headers)
-
-            # Записываем заголовки
-            writer.writeheader()
-
-            # Записываем данные
-            writer.writerows(json_data)
-
-        print(f"✅ Данные успешно сохранены в {csv_filepath}")
+        parent_elements = driver.find_elements(By.CSS_SELECTOR, "div.ranking > div:nth-child(1) > div")[3:]
+        for index, parent in enumerate(parent_elements, start=1):
+            try:
+                position = parent.find_element(By.CSS_SELECTOR, "span.position").text
+                team_name = parent.find_element(By.CSS_SELECTOR, "div.teamLine span.name").text
+                
+                if index == 1:
+                    link_team_selector = "div > div.lineup-con > div > a:nth-child(1)"
+                else:
+                    link_team_selector = "div > div.lineup-con.hidden > div > a:nth-child(1)"
+                
+                link_team = parent.find_element(By.CSS_SELECTOR, link_team_selector).get_attribute("href")
+                
+                players = parent.find_elements(By.CSS_SELECTOR, "div.lineup-con table tbody tr td a")
+                player_dict = {}
+                for i, p in enumerate(players):
+                    try:
+                        player_dict[f"Name_player{i + 1}"] = p.find_element(By.TAG_NAME, "img").get_attribute("alt")
+                        player_dict[f"Link_player{i + 1}"] = p.get_attribute("href")
+                    except Exception as e:
+                        print(f"Ошибка при парсинге игрока {i + 1}: {e}")
+                        continue
+                
+                data["Year"].append(year)
+                data["Month"].append(month)
+                data["Date"].append(day)
+                data["Rank"].append(position)
+                data["Name_of_team"].append(team_name)
+                data["Members"].append(player_dict)
+                data["Link"].append(link_team)
+            except Exception as e:
+                print(f"Ошибка при обработке команды: {e}")
+                continue
     except Exception as e:
-        print(f"❌ Ошибка при записи в CSV: {e}")
+        print(f"Ошибка при получении списка команд: {e}")
+    return data
 
+def write_data(output_file, data):
+    try:
+        df = pd.DataFrame(data)
+        df.to_csv(output_file, mode="w", index=False, header=True)
+        print(f"Data written to {output_file}")
+    except Exception as e:
+        print(f"Ошибка при записи данных в файл: {e}")
 
-# Пример использования
-# teams_data = get_top_50_teams()
-# json_to_csv(teams_data, 'teams.csv')
-
-# Получаем данные о командах
-teams_list = get_top_50_teams()
-
-
-# Сохраняем в JSON
-with open("teams.json", "w", encoding="utf-8") as f:
-    json.dump(teams_list, f, ensure_ascii=False, indent=4)
-
-print("Данные успешно сохранены в teams.json")
-# Закрываем браузер
-driver.quit()
+if __name__ == "__main__":
+    start_date = datetime(2023, 1, 2)  # 2 января 2023
+    end_date = datetime(2024, 12, 31)  # До конца 2024 года
+    urls = generate_urls(start_date, end_date)
+    driver = setup_selenium()
+    
+    all_data = {"Year": [], "Month": [], "Date": [], "Rank": [], "Name_of_team": [], "Members": [], "Link": []}
+    
+    for cur_url in urls:
+        try:
+            print(f"Парсинг данных за {cur_url}")
+            driver.get(URL + cur_url)
+            if await_load(driver):
+                try:
+                    data = extract_data(driver, cur_url)
+                    for key in all_data:
+                        all_data[key].extend(data[key])
+                except Exception as e:
+                    print(f"Ошибка при обработке данных из {cur_url}: {e}")
+        except Exception as e:
+            print(f"Ошибка при загрузке страницы {cur_url}: {e}")
+    
+    write_data(OUTPUT_FILE, all_data)
+    driver.quit()
