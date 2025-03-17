@@ -111,15 +111,15 @@ def extract_data(url):  # TODO написать функцию для парси
                     try:
                         cur_player = parent_element.find_element(
                             By.CSS_SELECTOR,
-                            f"div > div.lineup-con > table > tbody > tr > td:nth-child({
-                                i + 1
+                            f"div > div.lineup-con > table > tbody > tr > td:nth-child({\
+                                i + 1\
                             }) > a",
                         )
                     except:
                         cur_player = parent_element.find_element(
                             By.CSS_SELECTOR,
-                            f"div > div.lineup-con.hidden > table > tbody > tr > td:nth-child({
-                                i + 1
+                            f"div > div.lineup-con.hidden > table > tbody > tr > td:nth-child({\
+                                i + 1\
                             }) > a",
                         )
                     player_links.append(cur_player.get_attribute("href"))
