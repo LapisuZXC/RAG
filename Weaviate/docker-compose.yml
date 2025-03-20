@@ -39,5 +39,5 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ./data/weaviate  # Путь на хосте, где будут храниться данные
+      device: ./data_weaviate  # Путь на хосте, где будут храниться данные
       o: bind
