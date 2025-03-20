@@ -4,6 +4,11 @@ Scripts/
 pyvenv.cfg
 __pycache__/
 venv/
+myenv/
 Data/team_ranking.csv
 Parser_links.py
 *.csv
+*.ipynb
+models/llama.cpp/
+models/YanaS/llama-2-7b-langchain-chat-GGUF/
+
