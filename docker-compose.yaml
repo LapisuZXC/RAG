@@ -1,0 +1,41 @@
+
+services:
+  weaviate:
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --scheme
+      - http
+    image: cr.weaviate.io/semitechnologies/weaviate:1.29.1
+    ports:
+      - 8080:8080
+      - 50051:50051
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    restart: on-failure:0
+    environment:
+      query_defaults_limit: 25
+      authentication_anonymous_access_enabled: 'true'
+      persistence_data_path: '/var/lib/weaviate'
+      enable_api_based_modules: 'true'
+      enable_modules: 'text2vec-ollama,generative-ollama'
+      cluster_hostname: 'node1'
+
+
+
+  weaviate-console:
+    image: semitechnologies/weaviate-console
+    ports:
+      - 8081:8080
+    environment:
+      BACKEND: http://weaviate:8080
+    depends_on:
+      - weaviate
+
+
+
+volumes:
+  weaviate_data:
+
