@@ -1,3 +1,6 @@
+import os
+import pandas as pd
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -5,13 +8,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium_stealth import stealth
-import os
-import pandas as pd
-from datetime import datetime
 
 
 
-
+# Путь файла записи
 output_file = str(os.getcwd() + "\\Data\\team_ranking.csv")
 
 
@@ -52,7 +52,7 @@ def await_of_load() -> bool:
         return False
 
 
-def extract_data(url: str) -> [str]:
+def extract_data(url: str) -> [str]:  # TODO написать функцию для парсинга
     [cur_year, cur_month, cur_date] = url.split('/')
     data = {
             "Year": [],
@@ -101,28 +101,29 @@ def extract_data(url: str) -> [str]:
                     player_names.append(cur_player.get_attribute("alt"))
 
                 player_dict = {}
-
-                for i, (link, name) in enumerate(
-                    zip(player_links, player_names), start=1):
-                    
+                for i, (link, name) in enumerate(zip(player_links, player_names), start=1):
                     key1 = f"Name_player{i}"
                     player_dict[key1] = name
-                    
                     key2 = f"Link_player{i}"
                     player_dict[key2] = link
 
-
                 data_one = {
-                    "Year": cur_year,
-                    "Month": cur_month,
-                    "Date": cur_date,
-                    "Rank": position,
-                    "Name_of_team": team_name,
-                    "Members": player_dict,
-                    "Link": link_team,
+                        "Year": [cur_year],
+                        "Month": [cur_month],
+                        "Date": [cur_date],
+                        "Rank": [position],
+                        "Name_of_team": [team_name],
+                        "Members": [player_dict],
+                        "Link": [link_team]
                 }
 
-
+                # print(f"  {position=}")
+                # print(f"  {team_name=}")
+                # print(f"  {link_team=}")
+                # print(f"  {count_of_players=}")
+                # print(player_links)
+                # print(player_names)
+                
                 for key in data.keys():
                     if key in data_one:
                         data[key].append(data_one[key])
@@ -141,7 +142,6 @@ def extract_data(url: str) -> [str]:
 
 def write_links(output_file: str, data: {str}) -> None:
     if not os.path.exists(output_file):
-        print("Creating output_file")
         imp_data = {
             "Year": [],
             "Month": [],
@@ -149,7 +149,7 @@ def write_links(output_file: str, data: {str}) -> None:
             "Rank": [],
             "Name_of_team": [],
             "Members": [],
-            "Link": [],
+            "Link": []
         }
         data_frame = pd.DataFrame(imp_data)
         data_frame.to_csv(output_file, index=False)
@@ -164,10 +164,10 @@ def write_links(output_file: str, data: {str}) -> None:
 
 """----------------Main function----------------"""
 
+
 if True:
     today = datetime.today().strftime("%Y/%B/%d").lower()
-    cur_url = "https://www.hltv.org/ranking/teams/2025/march/17"
-    #cur_url = f"https://www.hltv.org/ranking/teams/{today}"
+    cur_url = f"https://www.hltv.org/ranking/teams/{today}"
     print(f'Getting commands tier-list: {cur_url}')
 
     driver = setup_selenium()
@@ -178,10 +178,8 @@ if True:
     if isValid:
         print("Find the list today")
         cur_data = extract_data(today)
-        write_links(output_file, today)
+        write_links(output_file, cur_data)
     else:
         print("Don't find the list today")
 
     driver.quit()
-
-
