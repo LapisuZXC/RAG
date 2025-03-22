@@ -17,20 +17,6 @@ import re
 output_file = "Data/news_links.txt"
 
 
-
-def last_three_months():
-    today = datetime.now()
-    last_months = []
-
-    for i in range(0, 3):
-        month_date = today - relativedelta(months=i)
-        month_str = month_date.strftime("%Y/%B").lower()
-        last_months.append(month_str)
-
-    return last_months[::-1]
-
-
-
 def setup_selenium() -> "driver":
     # Настройка Selenium
     options = webdriver.ChromeOptions()
@@ -71,56 +57,71 @@ def await_of_load() -> bool:
 # body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > article > div.newsdsl > div.newstext-con
 
 
-def extract_data(url: str) -> [str]:
+def try_extract_all_data(driver) -> dict:
+     # Get the content of the article using the specified CSS selector
+    article_element = driver.find_element(By.CSS_SELECTOR, 'body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > article')
+    
+    # Get the page's HTML (after JS has loaded content)
+    page_html = article_element.get_attribute('outerHTML')
+    
+    # Parse with BeautifulSoup
+    soup = BeautifulSoup(page_html, 'html.parser')
 
-    # Define the selector for all elements with the required classes
-    selectors = [
-        '.headertext',  # Class for the header text
-        '.news-block',  # Class for the news block
-        '.featured-quote',  # Class for featured quotes
-    ]
+    # Extract headers (h1, h2, h3, h4, h5, h6)
+    headers = [re.sub(r'[^\x00-\x7F]+', '', header.get_text(strip=True)) for header in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])]
+    
+    # Extract strong text (bold)
+    strong_text = [re.sub(r'[^\x00-\x7F]+', '', strong.get_text(strip=True)) for strong in soup.find_all('strong')]
+    
+    # Extract paragraphs (text inside <p>)
+    paragraphs = [re.sub(r'[^\x00-\x7F]+', '', p.get_text(strip=True)) for p in soup.find_all('p')]
+    
+    # Extract quotes (blockquotes)
+    blockquotes = [blockquote.get_text(strip=True) for blockquote in soup.find_all('blockquote')]
+    
+    featured_quotes = []
 
-    # List to store the extracted text
-    text_data = []
+    elements = driver.find_elements(By.CSS_SELECTOR, '.featured-quote')
+    for element in elements:
+        cleaned_text = re.sub(r'[^\x00-\x7F]+', '', element.text)
+        if cleaned_text:
+            featured_quotes.append(cleaned_text)
 
-    parent_selector = "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.index > div.standard-box.standard-list"
+    # Extract tables (table tags and their contents)
+    tables = []
+    for table in soup.find_all('table'):
+        table_data = []
+        for row in table.find_all('tr'):
+            row_data = [cell.get_text(strip=True) for cell in row.find_all(['td', 'th'])]
+            table_data.append(row_data)
+        tables.append(table_data)
 
-    try:
-        heading_element = driver.find_element(By.CSS_SELECTOR, "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > article > h1")
-        text_data.append(heading_element.text)
+    # Combine all extracted information
+    data = {
+        'headers': headers,
+        'strong_text': strong_text,
+        'paragraphs': paragraphs,
+        'featured_quotes': featured_quotes,
+        'blockquotes': blockquotes,
+        'tables': tables,
+    }
 
-        for selector in selectors:
-            try:
-                # Find all matching elements for the current class
-                elements = driver.find_elements(By.CSS_SELECTOR, selector)
-                for element in elements:
-                    if element.tag_name != 'img' and element.tag_name != 'video':  # Ensure it's not an image or video
-                        text_data.append(element.text)
-            except Exception as e:
-                print(f"Error extracting from selector '{selector}': {e}")
-    except Exception as e:
-        print("Error due to extraction:", e)
-    # Output the extracted text
+    # for key, value in data.items():
+    #     print(f"{key}:")
+    #     if isinstance(value, list):
+    #         for item in value:
+    #             print(f"    - {item}")
+    #     else:
+    #         print(f"    {value}")
+    #     print()  # Add an empty line for better readability
+
     return data
 
 
-def write_links(output_file: str, data: {str}) -> None:
-    with open(output_file, 'w') as file:
-        for month in data:
-            for link in month:
-                file.write(link + '\n')
-    print(f"Data written to {output_file}")
-    
-    return None
 
 
 
-
-
-
-
-
-
+"""---------------------------Вариант 2, нет таблиц, но текст более структурирован-------------------------------------"""
 
 def try_extract(driver):
 
@@ -188,71 +189,6 @@ def try_extract(driver):
 
 
 
-def try_extract_all_data(driver):
-     # Get the content of the article using the specified CSS selector
-    article_element = driver.find_element(By.CSS_SELECTOR, 'body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > article')
-    
-    # Get the page's HTML (after JS has loaded content)
-    page_html = article_element.get_attribute('outerHTML')
-    
-    # Parse with BeautifulSoup
-    soup = BeautifulSoup(page_html, 'html.parser')
-
-    # Extract headers (h1, h2, h3, h4, h5, h6)
-    headers = [re.sub(r'[^\x00-\x7F]+', '', header.get_text(strip=True)) for header in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])]
-    
-    # Extract strong text (bold)
-    strong_text = [re.sub(r'[^\x00-\x7F]+', '', strong.get_text(strip=True)) for strong in soup.find_all('strong')]
-    
-    # Extract paragraphs (text inside <p>)
-    paragraphs = [re.sub(r'[^\x00-\x7F]+', '', p.get_text(strip=True)) for p in soup.find_all('p')]
-    
-    # Extract quotes (blockquotes)
-    blockquotes = [blockquote.get_text(strip=True) for blockquote in soup.find_all('blockquote')]
-    
-    featured_quotes = []
-
-    elements = driver.find_elements(By.CSS_SELECTOR, '.featured-quote')
-    for element in elements:
-        cleaned_text = re.sub(r'[^\x00-\x7F]+', '', element.text)
-        if cleaned_text:
-            featured_quotes.append(cleaned_text)
-
-    # Extract tables (table tags and their contents)
-    tables = []
-    for table in soup.find_all('table'):
-        table_data = []
-        for row in table.find_all('tr'):
-            row_data = [cell.get_text(strip=True) for cell in row.find_all(['td', 'th'])]
-            table_data.append(row_data)
-        tables.append(table_data)
-
-    # Combine all extracted information
-    data = {
-        'headers': headers,
-        'strong_text': strong_text,
-        'paragraphs': paragraphs,
-        'featured_quotes': featured_quotes,
-        'blockquotes': blockquotes,
-        'tables': tables,
-    }
-    for key, value in data.items():
-        print(f"{key}:")
-        if isinstance(value, list):
-            for item in value:
-                print(f"    - {item}")
-        else:
-            print(f"    {value}")
-        print()  # Add an empty line for better readability
-    return data
-
-
-
-
-
-
-
-
 
 
 
@@ -261,7 +197,6 @@ def try_extract_all_data(driver):
 if True:
     link = 'https://www.hltv.org/news/40889/twistzz-it-does-suck-not-being-able-to-play-cluj'
     #link = 'https://www.hltv.org/news/41221/short-news-week-12'
-    data = []
     try:
         driver = setup_selenium()
         print("URL", link)
@@ -270,7 +205,7 @@ if True:
 
         if isValid:
             print("Valid succesfull - ", link)
-            try_extract_all_data(driver)
+            data = try_extract_all_data(driver)
             #data.append(extract_data(link))
             
         else:
@@ -282,7 +217,6 @@ if True:
         print(e)
 
 
-    #print(data)
-    #write_links(output_file, links)
+    print(data)
     driver.quit()
 
