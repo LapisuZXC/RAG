@@ -199,20 +199,25 @@ def try_extract_all_data(driver):
     soup = BeautifulSoup(page_html, 'html.parser')
 
     # Extract headers (h1, h2, h3, h4, h5, h6)
-    headers = [header.get_text(strip=True) for header in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])]
+    headers = [re.sub(r'[^\x00-\x7F]+', '', header.get_text(strip=True)) for header in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])]
     
     # Extract strong text (bold)
-    strong_text = [strong.get_text(strip=True) for strong in soup.find_all('strong')]
+    strong_text = [re.sub(r'[^\x00-\x7F]+', '', strong.get_text(strip=True)) for strong in soup.find_all('strong')]
     
     # Extract paragraphs (text inside <p>)
-    paragraphs = [p.get_text(strip=True) for p in soup.find_all('p')]
+    paragraphs = [re.sub(r'[^\x00-\x7F]+', '', p.get_text(strip=True)) for p in soup.find_all('p')]
     
     # Extract quotes (blockquotes)
     blockquotes = [blockquote.get_text(strip=True) for blockquote in soup.find_all('blockquote')]
     
-    # Extract all links (anchor tags)
-    links = [link.get_text(strip=True) for link in soup.find_all('a')]
-    
+    featured_quotes = []
+
+    elements = driver.find_elements(By.CSS_SELECTOR, '.featured-quote')
+    for element in elements:
+        cleaned_text = re.sub(r'[^\x00-\x7F]+', '', element.text)
+        if cleaned_text:
+            featured_quotes.append(cleaned_text)
+
     # Extract tables (table tags and their contents)
     tables = []
     for table in soup.find_all('table'):
@@ -227,11 +232,18 @@ def try_extract_all_data(driver):
         'headers': headers,
         'strong_text': strong_text,
         'paragraphs': paragraphs,
+        'featured_quotes': featured_quotes,
         'blockquotes': blockquotes,
-        'links': links,
         'tables': tables,
     }
-    print(data)
+    for key, value in data.items():
+        print(f"{key}:")
+        if isinstance(value, list):
+            for item in value:
+                print(f"    - {item}")
+        else:
+            print(f"    {value}")
+        print()  # Add an empty line for better readability
     return data
 
 
@@ -247,8 +259,8 @@ def try_extract_all_data(driver):
 """----------------Main function----------------"""
 
 if True:
-    #link = 'https://www.hltv.org/news/40889/twistzz-it-does-suck-not-being-able-to-play-cluj'
-    link = 'https://www.hltv.org/news/41221/short-news-week-12'
+    link = 'https://www.hltv.org/news/40889/twistzz-it-does-suck-not-being-able-to-play-cluj'
+    #link = 'https://www.hltv.org/news/41221/short-news-week-12'
     data = []
     try:
         driver = setup_selenium()
