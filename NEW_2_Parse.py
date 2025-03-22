@@ -166,26 +166,22 @@ def write_links(output_file: str, data: {str}) -> None:
 """----------------Main function----------------"""
 
 if True:
-    cur_year = datetime.today().strftime('%Y')
-    cur_month = int(datetime.today().strftime('%m'))
-    cur_date = datetime.today().strftime('%d')
-    months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
-    #cur_year = input()
-    #cur_month = int(input())
-    #cur_date = input()
-
-    cur_url = f"/{cur_year}/{months[cur_month-1]}/{cur_date}"
-    print(cur_url)
+    today = datetime.today().strftime("%Y/%B/%d").lower()
+    cur_url = "https://www.hltv.org/ranking/teams/2025/march/17"
+    #cur_url = f"https://www.hltv.org/ranking/teams/{today}"
+    print(f'Getting commands tier-list: {cur_url}')
     try:
         driver = setup_selenium()
-        driver.get(str(URL + cur_url))
+        driver.get(str(cur_url))
         await_of_load()
         isValid = await_of_load()
 
         if isValid:
-            print("Today is a perfect day")
+            print("Find the list today")
             cur_data = extract_data(cur_url)
             write_links(output_file, cur_data)
+        else:
+            print("Don't find the list today")
 
         driver.quit()
 
@@ -193,3 +189,4 @@ if True:
         print(e)
 
     driver.quit()
+
