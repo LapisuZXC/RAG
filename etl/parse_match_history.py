@@ -59,7 +59,7 @@ def parse_team_matches(team_id, team_name, driver):
 
 def main():
     # Заменить на unique_teams.csv
-    df_teams = pd.read_csv("../data/processed/team_test.csv")
+    df_teams = pd.read_csv("../data/processed/team_test.csv") #Заменить на unique teams
     driver = setup_selenium()
 
     all_matches = []
