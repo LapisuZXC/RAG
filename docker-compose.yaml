@@ -10,7 +10,7 @@ services:
       - http
     image: cr.weaviate.io/semitechnologies/weaviate:1.29.1
     ports:
-      - 8080:8080
+      - 8181:8080
       - 50051:50051
     volumes:
       - weaviate_data:/var/lib/weaviate
@@ -22,6 +22,10 @@ services:
       enable_api_based_modules: 'true'
       enable_modules: 'text2vec-ollama,generative-ollama'
       cluster_hostname: 'node1'
+      CORS_ALLOWED_ORIGINS: "http://localhost:8081,http://weaviate-console:8080"
+      CORS_ALLOWED_METHODS: "GET,POST,PUT,DELETE"
+    networks:
+      - weaviate-net
 
 
 
@@ -33,9 +37,14 @@ services:
       BACKEND: http://weaviate:8080
     depends_on:
       - weaviate
+    networks:
+      - weaviate-net
 
 
 
 volumes:
   weaviate_data:
 
+networks:
+  weaviate-net:
+    driver: bridge
