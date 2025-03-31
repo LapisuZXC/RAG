@@ -2,7 +2,7 @@ import random
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium_stealth import stealth
-
+import os
 # Список User-Agent для ротации
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -14,7 +14,15 @@ USER_AGENTS = [
 
 
 def setup_selenium():
-    driver_path = "/usr/bin/chromedriver"
+    is_will_install_driver = False
+    if os.path.exists("/usr/bin/chromedriver"):
+        driver_path = "/usr/bin/chromedriver"
+    elif os.path.exists("F:/DriverManager/chromedriver-win64/chromedriver.exe"):
+        driver_path = "F:/DriverManager/chromedriver-win64/chromedriver.exe"
+    else:
+        from webdriver_manager.chrome import ChromeDriverManager
+        driver_path = ChromeDriverManager().install()
+
     options = webdriver.ChromeOptions()
 
     # Выбираем случайный User-Agent

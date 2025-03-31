@@ -178,7 +178,7 @@ if True:
     if isValid:
         print("Find the list today")
         cur_data = extract_data(today)
-        write_links(output_file, cur_data)
+        #write_links(output_file, cur_data)
     else:
         print("Don't find the list today")
 

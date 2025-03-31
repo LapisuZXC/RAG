@@ -106,14 +106,14 @@ def try_extract_all_data(driver) -> dict:
         'tables': tables,
     }
 
-    # for key, value in data.items():
-    #     print(f"{key}:")
-    #     if isinstance(value, list):
-    #         for item in value:
-    #             print(f"    - {item}")
-    #     else:
-    #         print(f"    {value}")
-    #     print()  # Add an empty line for better readability
+    for key, value in data.items():
+        print(f"{key}:")
+        if isinstance(value, list):
+            for item in value:
+                print(f"    - {item}")
+        else:
+            print(f"    {value}")
+        print()  # Add an empty line for better readability
 
     return data
 
@@ -195,8 +195,8 @@ def try_extract(driver):
 """----------------Main function----------------"""
 
 if True:
-    link = 'https://www.hltv.org/news/40889/twistzz-it-does-suck-not-being-able-to-play-cluj'
-    #link = 'https://www.hltv.org/news/41221/short-news-week-12'
+    #link = 'https://www.hltv.org/news/40889/twistzz-it-does-suck-not-being-able-to-play-cluj'
+    link = 'https://www.hltv.org/news/41221/short-news-week-12'
     try:
         driver = setup_selenium()
         print("URL", link)
@@ -217,6 +217,6 @@ if True:
         print(e)
 
 
-    print(data)
+    #print(data)
     driver.quit()
 

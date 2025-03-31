@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Literal
 
 
-def get_date_range(
+def get_date_from(
     time_filter: Literal[
         "last_month", "last_3_months", "last_6_months", "2023-2024"
     ] = "last_3_months",
@@ -43,3 +43,32 @@ def get_date_range(
     end_date_str = today.strftime("%Y-%m-%d")
 
     return f"startDate={start_date_str}&endDate={end_date_str}"
+
+
+def get_date_current() -> str:
+    """
+    Возвращает текущий год, месяц (в формате слова с маленькой буквы) и день
+    """
+
+    current_data = datetime.today().strftime("%Y/%B/%d").lower()
+
+    return f"currentDate={current_data}"
+
+
+def generate_date_list(year_from: int, year_to: int) -> list[str]:
+    """
+    Возвращает список всех дат в период с year_from до year_to в формате /год/месяц(наприме: march)/дата
+    """
+    if year_from > year_to:
+        raise ValueError
+    
+    date_list = []
+    start_date = datetime(year_from, 1, 1)
+    end_date = datetime(year_to, 12, 31)
+
+    current_date = start_date
+    while current_date <= end_date:
+        date_list.append(f"/{current_date.year}/{current_date.strftime('%B').lower()}/{current_date.day}")
+        current_date += timedelta(days=1)
+
+    return date_list

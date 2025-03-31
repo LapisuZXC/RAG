@@ -24,7 +24,7 @@ def last_three_months():
     today = datetime.now()
     last_months = []
 
-    for i in range(0, 3):
+    for i in range(0, 1):
         month_date = today - relativedelta(months=i)
         month_str = month_date.strftime("%Y/%B").lower()
         last_months.append(month_str)
@@ -78,7 +78,9 @@ def extract_data(url: str) -> [str]:
 
     try:
         link_elements = driver.find_elements(By.CSS_SELECTOR, f"{parent_selector} > a")
-        for link_element in link_elements:
+        for index, link_element in enumerate(link_elements):
+            if index > 101:
+                break
             link = link_element.get_attribute('href')
             if link:
                 links.append(link)
