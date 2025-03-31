@@ -52,3 +52,6 @@ def setup_selenium():
     )
 
     return driver
+
+
+
