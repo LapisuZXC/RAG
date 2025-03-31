@@ -1,60 +1,13 @@
-import os
-import pandas as pd
-from datetime import datetime
 from bs4 import BeautifulSoup
-from dateutil.relativedelta import relativedelta
-from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium_stealth import stealth
 import re
-
+from util.setup_selenium import setup_selenium
+from util.selenium_workflow import await_of_load
 
 # Путь файла записи
-output_file = "Data/news_links.txt"
+output_file = "Data/raw/last_news_links.txt"
 
 
-def setup_selenium() -> "driver":
-    # Настройка Selenium
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')  # Запуск в фоновом режиме
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-
-    # Инициализация драйвера
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
-
-    # Настройка Selenium Stealth
-    stealth(
-        driver,
-        languages=["en-US", "en"],
-        vendor="Google Inc.",
-        platform="Win64",
-        webgl_vendor="Intel Inc.",
-        renderer="Intel Iris OpenGL Engine",
-        fix_hairline=True,
-    )
-    return driver
-
-
-def await_of_load() -> bool:
-    try:
-        WebDriverWait(driver, 3).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol")))
-        print("Таблица загружена.")
-        return True
-    
-    except Exception as e:
-        print(f"Ошибка при загрузке таблицы: {e}")
-        return False
-
-
-# body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > article > div.newsdsl > div.newstext-con
 
 
 def try_extract_all_data(driver) -> dict:

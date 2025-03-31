@@ -1,6 +1,6 @@
 from util.selenium_workflow import driver_context_manager, await_of_load, write_links
 from util.datetime_util import get_date_current
-from Parser_commands import extract_data, data_csv_format
+from etl.parse_teams_all import extract_data, data_csv_format
 
 
 URL = 'https://www.hltv.org/ranking/teams'
