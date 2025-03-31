@@ -2,8 +2,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from util.datetime_util import generate_date_list
 from typing import Dict, List, Union
-from util.selenium_workflow import driver_context_manager, await_of_load, write_links
-
+from util.selenium_workflow import driver_context_manager, await_of_load
+from util.csv_workflow import write_links
 
 URL = 'https://www.hltv.org/ranking/teams'
 output_file = "Data/raw/team_ranking.csv"

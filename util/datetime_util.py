@@ -45,14 +45,14 @@ def get_date_from(
     return f"startDate={start_date_str}&endDate={end_date_str}"
 
 
-def get_date_current() -> str:
+def get_date_current() -> datetime:
     """
     Возвращает текущий год, месяц (в формате слова с маленькой буквы) и день
     """
 
     current_data = datetime.today().strftime("%Y/%B/%d").lower()
 
-    return f"currentDate={current_data}"
+    return current_data
 
 
 def generate_date_list(year_from: int, year_to: int) -> list[str]:

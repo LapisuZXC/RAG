@@ -1,4 +1,5 @@
-from util.selenium_workflow import driver_context_manager, await_of_load, write_links
+from util.selenium_workflow import driver_context_manager, await_of_load
+from util.csv_workflow import write_links
 from util.datetime_util import get_date_current
 from etl.parse_teams_all import extract_data, data_csv_format
 

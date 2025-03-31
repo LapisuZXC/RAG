@@ -1,11 +1,8 @@
-import os
-import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from util.setup_selenium import setup_selenium
-from typing import Dict, List, Union
 
 class driver_context_manager(object):
     """
@@ -41,15 +38,3 @@ def await_of_load(driver: webdriver) -> bool:
         print(f"Ошибка при загрузке таблицы: {e}")
 
     return False
-
-
-def write_links(output_file: str, data: list[str], data_csv_format: Dict[str, Union[str, int, List[str]]]) -> None:
-    if not os.path.exists(output_file):
-        data_frame = pd.DataFrame(data_csv_format)
-        data_frame.to_csv(output_file, index=False)
-
-    data_frame = pd.DataFrame(data)
-    data_frame.to_csv(output_file, mode="a", index=False, header=False)
-
-    print(f"Data written to {output_file}")
-    return None
