@@ -22,8 +22,8 @@ def parse_team_maps(team_id, team_name, driver):
         try:
             map_name_elem = driver.find_element(
                 By.CSS_SELECTOR,
-                f"div.two-grid:nth-child(9) > div:nth-child({
-                    i
+                f"div.two-grid:nth-child(9) > div:nth-child({\
+                    i\
                 }) > div:nth-child(1) > a:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
             )
             map_name = map_name_elem.text.strip()

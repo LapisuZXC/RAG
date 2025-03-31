@@ -51,7 +51,8 @@ def extract_data(driver, url):
         )[3:]
         for index, parent in enumerate(parent_elements, start=1):
             try:
-                position = parent.find_element(By.CSS_SELECTOR, "span.position").text
+                position = parent.find_element(
+                    By.CSS_SELECTOR, "span.position").text
                 team_name = parent.find_element(
                     By.CSS_SELECTOR, "div.teamLine span.name"
                 ).text
@@ -76,7 +77,8 @@ def extract_data(driver, url):
                         player_dict[f"Name_player{i + 1}"] = p.find_element(
                             By.TAG_NAME, "img"
                         ).get_attribute("alt")
-                        player_dict[f"Link_player{i + 1}"] = p.get_attribute("href")
+                        player_dict[f"Link_player{
+                            i + 1}"] = p.get_attribute("href")
                     except Exception as e:
                         print(f"Ошибка при парсинге игрока {i + 1}: {e}")
                         continue
