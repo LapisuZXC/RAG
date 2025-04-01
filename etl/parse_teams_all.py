@@ -19,6 +19,9 @@ data_csv_format = {
     }
 
 
+TABLE_SELECTOR = "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking"
+# Селектор общей таблицы данных
+
 def extract_data(url: str, driver: webdriver) -> Dict[str, Union[str, int, List[Dict[str, str]]]]:
     _, cur_year, cur_month, cur_date = url.split('/')
     data = data_csv_format
@@ -95,7 +98,7 @@ def main():
             print("Getting data from: ", str(URL + cur_url))
             driver.get(str(URL + cur_url))
 
-            isValid = await_of_load(driver)
+            isValid = await_of_load(driver, TABLE_SELECTOR)
             if isValid:
                 print("Found data")
                 cur_data = extract_data(cur_url, driver)

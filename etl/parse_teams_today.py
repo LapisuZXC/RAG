@@ -1,7 +1,7 @@
 from util.selenium_workflow import driver_context_manager, await_of_load
 from util.csv_workflow import write_links
 from util.datetime_util import get_date_current
-from etl.parse_teams_all import extract_data, data_csv_format
+from etl.parse_teams_all import extract_data, data_csv_format, TABLE_SELECTOR
 
 
 URL = 'https://www.hltv.org/ranking/teams'
@@ -18,8 +18,8 @@ def main():
         
         print(f"Getting data from: {current_url}")
         driver.get(current_url)
-
-        isValid = await_of_load(driver)
+        
+        isValid = await_of_load(driver, TABLE_SELECTOR)
         if isValid:
             print("Found data")
             cur_data = extract_data(current_url, driver)

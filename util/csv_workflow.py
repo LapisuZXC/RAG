@@ -13,3 +13,8 @@ def write_links(output_file: str, data: list[str], data_csv_format: Dict[str, Un
 
     print(f"Data written to {output_file}")
     return None
+
+
+def print_csv(file_path: str) -> None:
+    print(pd.read_csv(file_path))
+    return None

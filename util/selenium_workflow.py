@@ -24,13 +24,13 @@ class driver_context_manager(object):
         return self
 
 
-def await_of_load(driver: webdriver) -> bool:
+def await_of_load(driver: webdriver, selector: str) -> bool:
     """
     Эта функция заставляет программу ожидать 5 секунд, пока страница не прогрузится, чтобы мы могли собрать все данные
     """
     try:
         WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking")))
+            EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
         print("Таблица загружена.")
         return True
     
