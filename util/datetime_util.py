@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from typing import Literal
 
 
@@ -72,3 +73,16 @@ def generate_date_list(year_from: int, year_to: int) -> list[str]:
         current_date += timedelta(days=1)
 
     return date_list
+
+
+
+def last_three_months() -> list[str]:
+    today = datetime.now()
+    last_months = []
+
+    for i in range(0, 2):
+        month_date = today - relativedelta(months=i)
+        month_str = month_date.strftime("%Y/%B").lower()
+        last_months.append(month_str)
+
+    return last_months[::-1]
