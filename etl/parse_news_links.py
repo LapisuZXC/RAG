@@ -1,10 +1,10 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from util.selenium_workflow import await_of_load, driver_context_manager
-from util.datetime_util import last_three_months
+from util.datetime_util import generate_month_list
 
 URL = 'https://www.hltv.org/news/archive/'
-output_file = "Data/news_links.txt"
+output_file = "Data/raw/news_links.txt"
 
 TABLE_SELECTOR = "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol"
 # Селектор общей таблицы данных
@@ -37,15 +37,17 @@ def write_links(output_file: str, data: {str}):
 
 
 def main():
-    required_monthes = last_three_months() # TODO переделать функцию покрасивее и оптимальнее
+    required_monthes = generate_month_list(2)
     links = []
 
-    for cur_url in required_monthes:
+    for current_month in required_monthes:
+        cur_url = str(URL + current_month)
+        
         with driver_context_manager() as driver_manager:
             driver = driver_manager.driver
-            print("Parsing news list from:", str(URL + cur_url))
+            print("Parsing news list from:", cur_url)
 
-            driver.get(str(URL + cur_url))
+            driver.get(cur_url)
             isValid = await_of_load(driver, TABLE_SELECTOR)
 
             if isValid:

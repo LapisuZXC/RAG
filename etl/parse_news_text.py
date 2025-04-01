@@ -3,11 +3,12 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from util.selenium_workflow import await_of_load
 from util.selenium_workflow import driver_context_manager, await_of_load
-from util.csv_workflow import write_links
+from util.csv_workflow import write_links, print_csv
 from typing import Dict, List, Union, Tuple
 from datetime import datetime
 
-output_file = "Data/raw/last_news_links.txt"
+output_file = "Data/raw/last_news_text.csv"
+input_file = "Data/raw/news_links.txt"
 
 data_csv_format = {
             "Year": [],
@@ -149,14 +150,21 @@ def processing_one_news_item(link: str):
             print("Cant find data")
 
 
+def read_links() -> list[str]:
+    try:
+        with open(input_file, 'r') as file:
+            links = file.readlines()
+    except Exception as e:
+        print(f"Error in reading input_file: {input_file} --------- {e}")
+        links = []
+    return links
+
+
 
 def main():
-    links = list()
-    link = 'https://www.hltv.org/news/40889/twistzz-it-does-suck-not-being-able-to-play-cluj'
-    #link = 'https://www.hltv.org/news/41221/short-news-week-12'
-    processing_one_news_item(link)
 
-    for link in links:
+    links = read_links()
+    for link in links[:2]:
         try:
             processing_one_news_item(link)
         except Exception as e:
@@ -165,3 +173,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    print_csv(output_file)
