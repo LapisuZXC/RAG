@@ -6,7 +6,7 @@ from util.selenium_workflow import driver_context_manager, await_of_load
 from util.csv_workflow import write_links
 
 URL = 'https://www.hltv.org/ranking/teams'
-output_file = "Data/raw/team_ranking.csv"
+output_file = "data/raw/team_ranking.csv"
 
 data_csv_format = {
             "Year": [],

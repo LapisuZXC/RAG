@@ -7,8 +7,8 @@ from util.csv_workflow import write_links, print_csv
 from typing import Dict, List, Union, Tuple
 from datetime import datetime
 
-output_file = "Data/raw/last_news_text.csv"
-input_file = "Data/raw/news_links.txt"
+output_file = "data/raw/last_news_text.csv"
+input_file = "data/raw/news_links.txt"
 
 data_csv_format = {
             "Year": [],

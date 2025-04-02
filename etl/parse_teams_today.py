@@ -5,7 +5,7 @@ from etl.parse_teams_all import extract_data, data_csv_format, TABLE_SELECTOR
 
 
 URL = 'https://www.hltv.org/ranking/teams'
-output_file = "Data/raw/team_ranking.csv"
+output_file = "data/raw/team_ranking.csv"
 
 
 def main():

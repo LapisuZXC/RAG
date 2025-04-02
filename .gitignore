@@ -8,3 +8,4 @@ Data/team_ranking.csv
 Parser_links.py
 Weaviate/data/*
 Weaviate/__pycache__
+data/

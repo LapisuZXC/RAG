@@ -4,7 +4,7 @@ from util.selenium_workflow import await_of_load, driver_context_manager
 from util.datetime_util import generate_month_list
 
 URL = 'https://www.hltv.org/news/archive/'
-output_file = "Data/raw/news_links.txt"
+output_file = "data/raw/news_links.txt"
 
 TABLE_SELECTOR = "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol"
 # Селектор общей таблицы данных
