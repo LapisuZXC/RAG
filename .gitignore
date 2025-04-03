@@ -5,7 +5,10 @@ pyvenv.cfg
 __pycache__/
 venv/
 myenv/
-Data/team_ranking.csv
+Data/
+data/
+grafana/
+prometheus/
 Parser_links.py
 *.csv
 *.ipynb
