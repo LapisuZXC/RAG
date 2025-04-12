@@ -1,12 +1,13 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from util.datetime_util import generate_date_list
+from util.datetime_util import generate_date_list_every_week
+from datetime import datetime
 from typing import Dict, List, Union
 from util.selenium_workflow import driver_context_manager, await_of_load
 from util.csv_workflow import write_links
 
 URL = 'https://www.hltv.org/ranking/teams'
-output_file = "data/raw/team_ranking.csv"
+output_file = "data/processed/team_ranking.csv"
 
 data_csv_format = {
             "Year": [],
@@ -88,10 +89,11 @@ def extract_data(url: str, driver: webdriver) -> Dict[str, Union[str, int, List[
 
 
 def main():
+    start_date = datetime(2023, 1, 2)  # 2 января 2023
+    end_date = datetime(2024, 12, 31)  # До конца 2024 года
+    urls = generate_date_list_every_week(start_date, end_date)
 
-    urls = generate_date_list(2023, 2024)
-
-    for cur_url in urls[:2]:
+    for cur_url in urls:
         with driver_context_manager() as driver_manager:
             driver = driver_manager.driver
             
