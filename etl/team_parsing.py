@@ -8,7 +8,17 @@ import random
 from datetime import datetime, timedelta
 
 URL = "https://www.hltv.org/ranking/teams"
-OUTPUT_FILE = "../data/processed/team_ranking.csv"
+OUTPUT_FILE = "data/processed/team_ranking.csv"
+
+
+"""
+
+Старая версия parse_teams_all.py 
+Хз надо ли сносить
+
+"""
+
+
 
 
 def await_load(driver):

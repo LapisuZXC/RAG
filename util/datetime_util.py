@@ -74,6 +74,19 @@ def generate_date_list(year_from: int, year_to: int) -> list[str]:
 
     return date_list
 
+def generate_date_list_every_week(start_date: int, end_date: int) -> list[str]:
+    """
+    Возвращает список всех дат каждые 7 дней
+    """
+    urls = []
+    current_date = start_date
+    while current_date <= end_date:
+        url = f"/{current_date.year}/{current_date.strftime('%B').lower()}/{
+            current_date.day
+        }"
+        urls.append(url)
+        current_date += timedelta(days=7)  # Шаг в 7 дней
+    return urls
 
 
 def generate_month_list(monthes: int) -> list[str]:

@@ -71,4 +71,4 @@ def modify_csv(input_file, team_file):
 
 
 if __name__ == "__main__":
-    modify_csv("Data/matches.csv", "Data/unique_teams.csv")
+    modify_csv("data/processed/matches.csv", "data/processed/unique_teams.csv")

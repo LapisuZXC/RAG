@@ -4,10 +4,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from util.datetime_util import get_date_range
+from util.datetime_util import get_date_from
 from util.setup_selenium import setup_selenium
 
-TIME_FILTER = get_date_range(time_filter="2023-2024")
+TIME_FILTER = get_date_from(time_filter="2023-2024")
 
 
 def parse_team_matches(team_id, team_name, driver):
@@ -59,7 +59,7 @@ def parse_team_matches(team_id, team_name, driver):
 
 def main():
     # Заменить на unique_teams.csv
-    df_teams = pd.read_csv("../data/processed/team_test.csv")
+    df_teams = pd.read_csv("data/processed/unique_teams.csv")
     driver = setup_selenium()
 
     all_matches = []
@@ -74,7 +74,7 @@ def main():
             all_matches.extend(matches)
         except Exception as e:
             print(f"Ошибка при парсинге {team_name}: {e}")
-
+        
     driver.quit()
 
     df_matches = pd.DataFrame(
@@ -94,7 +94,7 @@ def main():
     # Убираем лишние символы из team_name
     df_matches["team_name"] = df_matches["team_name"].apply(lambda x: x.strip("[]'"))
 
-    df_matches.to_csv("../data/processed/matches.csv", index=False)
+    df_matches.to_csv("data/processed/matches.csv", index=False)
     print("Файл matches.csv успешно сохранён!")
 
 

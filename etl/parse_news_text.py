@@ -164,7 +164,7 @@ def read_links() -> list[str]:
 def main():
 
     links = read_links()
-    for link in links[:2]:
+    for link in links:
         try:
             processing_one_news_item(link)
         except Exception as e:
@@ -173,4 +173,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    print_csv(output_file)
+    #print_csv(output_file)

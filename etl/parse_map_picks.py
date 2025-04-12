@@ -69,7 +69,7 @@ def parse_team_maps(team_id, team_name, driver):
 
 def main():
     # Заменить на unique_teams.csv
-    df_teams = pd.read_csv("data/processed/team_test.csv")
+    df_teams = pd.read_csv("data/processed/unique_teams.csv")
     driver = setup_selenium()
 
     all_maps_data = []
@@ -85,7 +85,7 @@ def main():
             all_maps_data.extend(team_maps)
         except Exception as e:
             print(f"Ошибка при парсинге команды {team_name}: {e}")
-
+        
     driver.quit()
 
     df_maps = pd.DataFrame(
@@ -93,7 +93,7 @@ def main():
         columns=["team_id", "team_name", "map_name", "winrate", "pickrate", "banrate"],
     )
     df_maps.to_csv("data/processed/team_maps.csv", index=False)
-    print("Файл data/team_maps.csv успешно создан!")
+    print("Файл team_maps.csv успешно создан!")
 
 
 if __name__ == "__main__":

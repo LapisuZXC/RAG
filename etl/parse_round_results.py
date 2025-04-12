@@ -5,6 +5,38 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from util.setup_selenium import setup_selenium
 
+#TODO Не работает
+"""
+
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\etl\parse_round_results.py", line 58, in <module>
+    main()
+  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\etl\parse_round_results.py", line 52, in main
+    df_matches["round_1_win"], df_matches["round_15_win"] = zip(*round_results)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\venv\Lib\site-packages\pandas\core\frame.py", line 4311, in __setitem__
+    self._set_item(key, value)
+  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\venv\Lib\site-packages\pandas\core\frame.py", line 4524, in _set_item
+    value, refs = self._sanitize_column(value)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\venv\Lib\site-packages\pandas\core\frame.py", line 5266, in _sanitize_column
+    com.require_length_match(value, self.index)
+  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\venv\Lib\site-packages\pandas\core\common.py", line 573, in require_length_match
+    raise ValueError(
+ValueError: Length of values (1) does not match length of index (365)
+Exception ignored in: <function Chrome.__del__ at 0x000002CAB4991BC0>
+Traceback (most recent call last):
+  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\venv\Lib\site-packages\undetected_chromedriver\__init__.py", line 843, in __del__
+  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\venv\Lib\site-packages\undetected_chromedriver\__init__.py", line 798, in quit
+
+
+
+
+
+"""
 
 def parse_round_results(match_link, driver):
     """Парсит результаты раундов по указанной ссылке."""
@@ -33,7 +65,7 @@ def parse_round_results(match_link, driver):
 
 
 def main():
-    df_matches = pd.read_csv("../data/processed/matches.csv")
+    df_matches = pd.read_csv("data/processed/matches.csv")
     driver = setup_selenium()
 
     round_results = []
@@ -46,12 +78,12 @@ def main():
         except Exception as e:
             print(f"Ошибка при парсинге {match_link}: {e}")
             round_results.append((None, None))
-
+        break
     driver.quit()
 
     df_matches["round_1_win"], df_matches["round_15_win"] = zip(*round_results)
-    df_matches.to_csv("../data/processed/matches.csv", index=False)
-    print("Файл data/matches.csv успешно обновлён!")
+    df_matches.to_csv("data/processed/matches.csv", index=False)
+    print("Файл matches.csv успешно обновлён!")
 
 
 if __name__ == "__main__":
