@@ -3,6 +3,12 @@ from selenium.webdriver.common.by import By
 from util.selenium_workflow import await_of_load, driver_context_manager
 from util.datetime_util import generate_month_list
 
+
+from logger.logger import Loger
+log = Loger(__file__)
+
+
+
 URL = 'https://www.hltv.org/news/archive/'
 output_file = "data/raw/news_links.txt"
 
@@ -22,7 +28,7 @@ def extract_links(driver: webdriver) -> list[str]:
             if link:
                 links.append(link)
     except Exception as e:
-        print(f"Error extracting links: {e}")
+        log.prnt(f"Error extracting links: {e}")
     
     return links
 
@@ -32,11 +38,13 @@ def write_links(output_file: str, data: {str}):
         for month in data:
             for link in month:
                 file.write(link + '\n')
-    print(f"Data written to {output_file}")
+    log.prnt(f"Data written to {output_file}")
 
 
 
-def main():
+def main(TEST_MODE = False):
+    log.prnt("Начали работу с файлом")
+
     required_monthes = generate_month_list(2)
     links = []
 
@@ -45,19 +53,25 @@ def main():
         
         with driver_context_manager() as driver_manager:
             driver = driver_manager.driver
-            print("Parsing news list from:", cur_url)
+            log.prnt("Parsing news list from:", cur_url)
 
             driver.get(cur_url)
             isValid = await_of_load(driver, TABLE_SELECTOR)
 
             if isValid:
-                print("Found data")
+                log.prnt("Found data")
                 links.append(extract_links(driver))
             else:
-                print("Cant find data")
+                log.prnt("Cant find data")
 
+
+        if TEST_MODE:
+            break
+
+    log.prnt("Начинаем запись с помощью write_links")
     write_links(output_file, links)
 
+    log.prnt("Закончили работу с файлом")
 
 
 if __name__ == "__main__":

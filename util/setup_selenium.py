@@ -1,28 +1,47 @@
+import random
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium_stealth import stealth
-from fake_useragent import UserAgent
+import os
+from webdriver_manager.chrome import ChromeDriverManager
 
-import undetected_chromedriver as uc
+# Список User-Agent для ротации
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:92.0) Gecko/20100101 Firefox/92.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
+]
 
 
 def setup_selenium():
-    options = uc.ChromeOptions()
 
-    # Фиксированный User-Agent (лучше использовать реальный)
-    user_agent = UserAgent().random
+    options = webdriver.ChromeOptions()
+    # Выбираем случайный User-Agent
+    user_agent = random.choice(USER_AGENTS)
     options.add_argument(f"user-agent={user_agent}")
 
-    # Убираем автоматическое управление браузером
-    options.add_argument("--disable-blink-features=AutomationControlled")
+    # Настройки Chrome
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
 
-    # Запуск браузера
-    driver = uc.Chrome(options=options, headless=False)
+    # Добавляем прокси, если указано
+    if os.path.exists("/usr/bin/chromedriver"):
+        driver_path = "/usr/bin/chromedriver"
+        driver = webdriver.Chrome(service=Service(driver_path), options=options)
+    elif os.path.exists('F:\DriverManager\chromedriver-win64\chromedriver'):
+        driver_path = 'F:\DriverManager\chromedriver-win64\chromedriver'
+        driver = webdriver.Chrome(service=Service(driver_path), options=options)
+    else:
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-    # Убираем следы Selenium с помощью stealth
+    # Настраиваем Selenium Stealth с тем же User-Agent
     stealth(
         driver,
-        user_agent=user_agent,
+        user_agent=user_agent,  # Теперь User-Agent совпадает
         languages=["en-US", "en"],
         vendor="Google Inc.",
         platform="Win64",
@@ -32,4 +51,3 @@ def setup_selenium():
     )
 
     return driver
-

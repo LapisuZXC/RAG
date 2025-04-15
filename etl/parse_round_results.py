@@ -5,6 +5,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from util.setup_selenium import setup_selenium
 
+
+from logger.logger import Loger
+log = Loger(__file__)
+
+
+
 #TODO Не работает
 """
 
@@ -65,6 +71,8 @@ def parse_round_results(match_link, driver):
 
 
 def main():
+    log.prnt("Начали работу с файлом")
+
     df_matches = pd.read_csv("data/processed/matches.csv")
     driver = setup_selenium()
 
@@ -76,14 +84,16 @@ def main():
             round_1_win, round_13_win = parse_round_results(match_link, driver)
             round_results.append((round_1_win, round_13_win))
         except Exception as e:
-            print(f"Ошибка при парсинге {match_link}: {e}")
+            log.prnt(f"Ошибка при парсинге {match_link}: {e}")
             round_results.append((None, None))
         break
     driver.quit()
 
     df_matches["round_1_win"], df_matches["round_15_win"] = zip(*round_results)
     df_matches.to_csv("data/processed/matches.csv", index=False)
-    print("Файл matches.csv успешно обновлён!")
+    log.prnt("Файл matches.csv успешно обновлён!")
+
+    log.prnt("Закончили работу с файлом")
 
 
 if __name__ == "__main__":

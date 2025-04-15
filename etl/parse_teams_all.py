@@ -6,8 +6,14 @@ from typing import Dict, List, Union
 from util.selenium_workflow import driver_context_manager, await_of_load
 from util.csv_workflow import write_links
 
+
+from logger.logger import Loger
+log = Loger(__file__)
+
+
+
 URL = 'https://www.hltv.org/ranking/teams'
-output_file = "data/processed/team_ranking.csv"
+output_file = "data/raw/team_ranking.csv"
 
 data_csv_format = {
             "Year": [],
@@ -22,6 +28,7 @@ data_csv_format = {
 
 TABLE_SELECTOR = "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking"
 # Селектор общей таблицы данных
+
 
 def extract_data(url: str, driver: webdriver) -> Dict[str, Union[str, int, List[Dict[str, str]]]]:
     _, cur_year, cur_month, cur_date = url.split('/')
@@ -77,36 +84,44 @@ def extract_data(url: str, driver: webdriver) -> Dict[str, Union[str, int, List[
                 data["Link"].append(link_team)
 
             except Exception as e:
-                print(e)
+                log.prnt(e)
 
     except Exception as e:
-        print(f"Ошибка при извлечении ссылки по селектору selector: {e}")
+        log.prnt(f"Ошибка при извлечении ссылки по селектору selector: {e}")
 
     return data
 
 
 
 
+def main(TEST_MODE = False):
+    valids = False
 
-def main():
-    start_date = datetime(2023, 1, 2)  # 2 января 2023
+    log.prnt("Начали работу с файлом")
+
+    start_date = datetime(2023, 1, 2)  #От 2 января 2023
     end_date = datetime(2024, 12, 31)  # До конца 2024 года
     urls = generate_date_list_every_week(start_date, end_date)
 
     for cur_url in urls:
+        log.prnt(str("Getting data from: " + URL + cur_url))
         with driver_context_manager() as driver_manager:
             driver = driver_manager.driver
-            
-            print("Getting data from: ", str(URL + cur_url))
+
             driver.get(str(URL + cur_url))
 
             isValid = await_of_load(driver, TABLE_SELECTOR)
             if isValid:
-                print("Found data")
+                log.prnt("Found data")
                 cur_data = extract_data(cur_url, driver)
                 write_links(output_file, cur_data, data_csv_format)
+                valids = True
             else:
-                print("Cant find data")
+                log.prnt("Cant find data")
+
+        if TEST_MODE and valids:
+            break
+    log.prnt("Закончили работу с файлом")
 
 
 if __name__ == "__main__":

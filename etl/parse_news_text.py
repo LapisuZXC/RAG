@@ -7,6 +7,11 @@ from util.csv_workflow import write_links, print_csv
 from typing import Dict, List, Union, Tuple
 from datetime import datetime
 
+
+from logger.logger import Loger
+log = Loger(__file__)
+
+
 output_file = "data/raw/last_news_text.csv"
 input_file = "data/raw/news_links.txt"
 
@@ -47,8 +52,8 @@ def extract_date_news(driver: webdriver) -> Tuple[int, str, int]:
             
     except Exception as e:
         date_in_str = "1-1-2000 01:01" # Если не смогли установить дату, то вводим следующие значения
-        print(f"Error extracting data and time because of: {e}")
-        print("Will use reserv date!!!")
+        log.prnt(f"Error extracting data and time because of: {e}")
+        log.prnt("Will use reserv date!!!")
     
     date_object = datetime.strptime(date_in_str, "%d-%m-%Y %H:%M")
     current_year = date_object.year
@@ -81,7 +86,7 @@ def extract_title_name(driver: webdriver) -> str:
             title_name = title_element.text
             
     except Exception as e:
-        print(f"Error extracting title name because of: {e}")
+        log.prnt(f"Error extracting title name because of: {e}")
     
     return title_name
 
@@ -109,7 +114,7 @@ def extract_news_text(driver: webdriver) -> List[str]:
                     text_data.append(cleaned_text)
 
         except Exception as e:
-            print(f"Error extracting from selector {selector}: {e}")
+            log.prnt(f"Error extracting from selector {selector}: {e}")
 
     return text_data
     
@@ -138,16 +143,16 @@ def processing_one_news_item(link: str):
     with driver_context_manager() as driver_manager:
         driver = driver_manager.driver
         
-        print(f"Getting data from: {link}")
+        log.prnt(f"Getting data from: {link}")
         driver.get(link)
 
         isValid = await_of_load(driver, NEWS_TABLE_SELECTOR)
         if isValid:
-            print("Found data")
+            log.prnt("Found data")
             cur_data = get_all_data_from_news(driver, link)
             write_links(output_file, cur_data, data_csv_format)
         else:
-            print("Cant find data")
+            log.prnt("Cant find data")
 
 
 def read_links() -> list[str]:
@@ -155,20 +160,27 @@ def read_links() -> list[str]:
         with open(input_file, 'r') as file:
             links = file.readlines()
     except Exception as e:
-        print(f"Error in reading input_file: {input_file} --------- {e}")
+        log.prnt(f"Error in reading input_file: {input_file} --------- {e}")
         links = []
     return links
 
 
 
-def main():
+def main(TEST_MODE = False):
+    log.prnt("Начали работу с файлом")
 
     links = read_links()
     for link in links:
         try:
             processing_one_news_item(link)
         except Exception as e:
-            print(f"Error in parsing the news with link: {link} ------- {e}")
+            log.prnt(f"Error in parsing the news with link: {link} ------- {e}")
+        
+        if TEST_MODE:
+            break
+        
+    log.prnt("Закончили работу с файлом")
+
 
 
 if __name__ == "__main__":
