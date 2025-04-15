@@ -8,15 +8,15 @@ from etl.parse_news_text import main as parse_news_text_main     # 2
 from logger.logger import Loger
 log = Loger(__file__)
 
-TEST_MODE = True
+TEST_MODE = False
 
 
 def main():
     log.prnt("Начали работу с файлом")
 
-    parse_teams_today_main()
+    parse_teams_today_main(TEST_MODE)
 
-    parse_news_links_main(TEST_MODE)
+    parse_news_links_main()
 
     parse_news_text_main(TEST_MODE)
 

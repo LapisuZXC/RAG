@@ -42,8 +42,9 @@ def write_links(output_file: str, data: {str}):
 
 
 
-def main(TEST_MODE = False):
+def main():
     log.prnt("Начали работу с файлом")
+
 
     required_monthes = generate_month_list(2)
     links = []
@@ -53,7 +54,7 @@ def main(TEST_MODE = False):
         
         with driver_context_manager() as driver_manager:
             driver = driver_manager.driver
-            log.prnt("Parsing news list from:", cur_url)
+            log.prnt(f"Parsing news list from: {cur_url}")
 
             driver.get(cur_url)
             isValid = await_of_load(driver, TABLE_SELECTOR)
@@ -63,10 +64,6 @@ def main(TEST_MODE = False):
                 links.append(extract_links(driver))
             else:
                 log.prnt("Cant find data")
-
-
-        if TEST_MODE:
-            break
 
     log.prnt("Начинаем запись с помощью write_links")
     write_links(output_file, links)

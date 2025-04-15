@@ -12,7 +12,7 @@ URL = 'https://www.hltv.org/ranking/teams'
 output_file = "data/raw/team_ranking.csv"
 
 
-def main():
+def main(TEST_MODE = False):
     log.prnt("Начали работу с файлом")
 
     current_data = get_date_current()
@@ -21,17 +21,24 @@ def main():
 
     with driver_context_manager() as driver_manager:
         driver = driver_manager.driver
+
         
+        if TEST_MODE:
+            current_url = "https://www.hltv.org/ranking/teams/2025/april/14"
+            current_data = "2025/april/14"
+
+
         log.prnt(f"Getting data from: {current_url}")
         driver.get(current_url)
         
         isValid = await_of_load(driver, TABLE_SELECTOR)
         if isValid:
             log.prnt("Found data")
-            cur_data = extract_data(current_url, driver)
+            cur_data = extract_data(str("1/" + current_data), driver)
             write_links(output_file, cur_data, data_csv_format)
         else:
             log.prnt("Cant find data")
+
 
     log.prnt("Закончили работу с файлом")
 
