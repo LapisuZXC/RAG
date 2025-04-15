@@ -5,11 +5,9 @@ pyvenv.cfg
 __pycache__/
 venv/
 myenv/
-Data/team_ranking.csv
-Parser_links.py
 Weaviate/data/*
 Weaviate/__pycache__
-data/
+data/*
 *.csv
 *.ipynb
 models/llama.cpp/

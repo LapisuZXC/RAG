@@ -6,10 +6,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 from util.setup_selenium import setup_selenium
 
 
+from logger.logger import Loger
+log = Loger(__file__)
+
+
+
 def parse_team_maps(team_id, team_name, driver):
     """Парсит мап пики для указанной команды."""
     url = f"https://www.hltv.org/stats/teams/maps/{team_id}/{team_name.lower()}"
-    print(f"Открываю URL: {url}")
+    log.prnt(f"Открываю URL: {url}")
     driver.get(url)
 
     WebDriverWait(driver, 5).until(
@@ -27,10 +32,10 @@ def parse_team_maps(team_id, team_name, driver):
                 }) > div:nth-child(1) > a:nth-child(1) > div:nth-child(1) > div:nth-child(2)",
             )
             map_name = map_name_elem.text.strip()
-            print(f"Найдена карта: {map_name}")
+            log.prnt(f"Найдена карта: {map_name}")
 
             if map_name in ["Cache", "Cobblestone"]:
-                print(f"Пропускаю карту {map_name}, так как она устарела.")
+                log.prnt(f"Пропускаю карту {map_name}, так как она устарела.")
                 continue
 
             winrate_elem = driver.find_element(
@@ -40,7 +45,7 @@ def parse_team_maps(team_id, team_name, driver):
                 }) > div:nth-child(2) > div:nth-child(2) > span:nth-child(2)",
             )
             winrate = winrate_elem.text.strip()
-            print(f"Винрейт карты {map_name}: {winrate}")
+            log.prnt(f"Винрейт карты {map_name}: {winrate}")
 
             pickrate_elem = driver.find_element(
                 By.CSS_SELECTOR,
@@ -49,7 +54,7 @@ def parse_team_maps(team_id, team_name, driver):
                 }) > div:nth-child(2) > div:nth-child(6) > span:nth-child(2)",
             )
             pickrate = pickrate_elem.text.strip()
-            print(f"Пикрейт карты {map_name}: {pickrate}")
+            log.prnt(f"Пикрейт карты {map_name}: {pickrate}")
 
             banrate_elem = driver.find_element(
                 By.CSS_SELECTOR,
@@ -58,16 +63,18 @@ def parse_team_maps(team_id, team_name, driver):
                 }) > div:nth-child(2) > div:nth-child(7) > span:nth-child(2)",
             )
             banrate = banrate_elem.text.strip()
-            print(f"Банрейт карты {map_name}: {banrate}")
+            log.prnt(f"Банрейт карты {map_name}: {banrate}")
 
             maps_data.append((team_id, team_name, map_name, winrate, pickrate, banrate))
         except Exception as e:
-            print(f"Ошибка при парсинге карты {i} для {team_name}: {e}")
+            log.prnt(f"Ошибка при парсинге карты {i} для {team_name}: {e}")
 
     return maps_data
 
 
-def main():
+def main(TEST_MODE = False):
+    log.prnt("Начали работу с файлом")
+
     # Заменить на unique_teams.csv
     df_teams = pd.read_csv("data/processed/unique_teams.csv")
     driver = setup_selenium()
@@ -78,14 +85,19 @@ def main():
         team_id = row["team_id"]
         team_name = row["team_name"]
 
-        print(f"Парсинг команды: {team_name} (ID: {team_id})")
+        log.prnt(f"Парсинг команды: {team_name} (ID: {team_id})")
 
         try:
             team_maps = parse_team_maps(team_id, team_name, driver)
             all_maps_data.extend(team_maps)
         except Exception as e:
-            print(f"Ошибка при парсинге команды {team_name}: {e}")
+            log.prnt(f"Ошибка при парсинге команды {team_name}: {e}")
         
+
+        if TEST_MODE:
+            break
+
+
     driver.quit()
 
     df_maps = pd.DataFrame(
@@ -93,7 +105,9 @@ def main():
         columns=["team_id", "team_name", "map_name", "winrate", "pickrate", "banrate"],
     )
     df_maps.to_csv("data/processed/team_maps.csv", index=False)
-    print("Файл team_maps.csv успешно создан!")
+    log.prnt("Файл team_maps.csv успешно создан!")
+
+    log.prnt("Закончили работу с файлом")
 
 
 if __name__ == "__main__":

@@ -7,6 +7,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from util.datetime_util import get_date_from
 from util.setup_selenium import setup_selenium
 
+
+from logger.logger import Loger
+log = Loger(__file__)
+
+
+
 TIME_FILTER = get_date_from(time_filter="2023-2024")
 
 
@@ -57,7 +63,9 @@ def parse_team_matches(team_id, team_name, driver):
     return matches
 
 
-def main():
+def main(TEST_MODE = False):
+    log.prnt("Начали работу с файлом")
+
     # Заменить на unique_teams.csv
     df_teams = pd.read_csv("data/processed/unique_teams.csv")
     driver = setup_selenium()
@@ -67,14 +75,19 @@ def main():
     for _, row in df_teams.iterrows():
         team_id = row["team_id"]
         team_name = row["team_name"].replace(" ", "-").lower()
-        print(f"Парсим {team_name}...")
+        log.prnt(f"Парсим {team_name}...")
 
         try:
             matches = parse_team_matches(team_id, team_name, driver)
             all_matches.extend(matches)
         except Exception as e:
-            print(f"Ошибка при парсинге {team_name}: {e}")
+            log.prnt(f"Ошибка при парсинге {team_name}: {e}")
         
+        
+        if TEST_MODE:
+            break
+
+
     driver.quit()
 
     df_matches = pd.DataFrame(
@@ -95,7 +108,8 @@ def main():
     df_matches["team_name"] = df_matches["team_name"].apply(lambda x: x.strip("[]'"))
 
     df_matches.to_csv("data/processed/matches.csv", index=False)
-    print("Файл matches.csv успешно сохранён!")
+    log.prnt("Файл matches.csv успешно сохранён!")
+    log.prnt("Закончили работу с файлом")
 
 
 if __name__ == "__main__":
