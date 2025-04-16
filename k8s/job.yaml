@@ -8,10 +8,12 @@ spec:
       restartPolicy: Never
       containers:
       - name: parser
-        image: my-parser-app
-        command: ["pyhton", "etl/init_parser.py"]
+        image: my-parser-app:latest
+        imagePullPolicy: Never
+        command: ["/bin/sh"]
+        args: ["-c", "ls -la && python3 etl/init_parser.py"]
         volumeMounts:
-          - name: data-volume
+          - name: parser-data
             mountPath: /app/data
       volumes:
         - name: parser-data

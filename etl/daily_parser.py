@@ -11,7 +11,7 @@ from etl.parse_news_links import main as parse_news_links_main   # 1
 from etl.parse_news_text import main as parse_news_text_main     # 2
 
 
-TEST_MODE = False
+TEST_MODE = True
 
 def create_data_dir():
     log.prnt("Создаём директории данных")

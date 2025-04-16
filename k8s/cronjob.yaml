@@ -10,10 +10,12 @@ spec:
         spec:
           containers:
           - name: parser
-            image: my-parser-app
-            command: ["pyhton", "etl/daily_parser.py"]
+            image: my-parser-app:latest
+            imagePullPolicy: Never
+            command: ["/bin/sh"]
+            args: ["-c", "ls -la && python3 etl/daily_parser.py"]
             volumeMounts:
-              - name: data-volume
+              - name: parser-data
                 mountPath: /app/data
           restartPolicy: OnFailure
           volumes:

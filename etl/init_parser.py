@@ -16,7 +16,7 @@ from etl.extract_match_id import main as extract_match_id_main  # 4
 from etl.parse_map_picks import main as parse_map_picks_main  # 5
 
 
-TEST_MODE = False
+TEST_MODE = True
 
 def create_data_dir():
     log.prnt("Создаём директории данных")

@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
         - name: parser-container
-          image: my-parser-app
+          image: my-parser-app:latest
+          imagePullPolicy: Never
           volumeMounts:
             - mountPath: /app/data
               name: parser-data
