@@ -1,4 +1,4 @@
-set -e     # chmod -x deploy.sh           ./deploy.sh
+set -e # chmod -x deploy.sh           ./deploy.sh
 
 APP_NAME="my-parser-app"
 NAMESPACE="default"
@@ -7,15 +7,14 @@ TAG="latest"
 K8S_DIR="./k8s"
 
 echo "==> Строим Docker образ..."
-eval $(minikube docker-env)     # eval $(minikube docker-env -u) для возврата
+eval $(minikube docker-env) # eval $(minikube docker-env -u) для возврата
 docker build -t $APP_NAME:$TAG $DOCKERFILE_PATH
 
 echo "==> Удаляем старые ресурсы..."
 kubectl delete -f $K8S_DIR/deployment.yaml --ignore-not-found
-kubectl delete -f $K8S_DIR/job.yaml  --ignore-not-found
-kubectl delete -f $K8S_DIR/cronjob.yaml  --ignore-not-found
-kubectl delete -f $K8S_DIR/persistent-volume.yaml  --ignore-not-found
-
+kubectl delete -f $K8S_DIR/job.yaml --ignore-not-found
+kubectl delete -f $K8S_DIR/cronjob.yaml --ignore-not-found
+kubectl delete -f $K8S_DIR/persistent-volume.yaml --ignore-not-found
 
 echo "==> Создаём Persistent Volume и Claim..."
 kubectl apply -f $K8S_DIR/persistent-volume.yaml
@@ -44,3 +43,4 @@ kubectl apply -f $K8S_DIR/cronjob.yaml
 
 echo "==> Всё, лафа кончилась, дальше сам :)"
 kubectl get all
+
