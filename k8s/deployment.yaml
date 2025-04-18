@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: parser-base
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: parser-base
+  template:
+    metadata:
+      labels:
+        app: parser-base
+    spec:
+      containers:
+        - name: parser-container
+          image: my-parser-app:latest
+          imagePullPolicy: Never
+          volumeMounts:
+            - mountPath: /app/data
+              name: parser-data
+      volumes:
+        - name: parser-data
+          persistentVolumeClaim: 
+            claimName: parser-pvc
