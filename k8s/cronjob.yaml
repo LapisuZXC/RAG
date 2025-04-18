@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: daily-parser
+spec:
+  schedule: "0 9 * * *" #каждый день в 9 утра
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: parser
+            image: my-parser-app:latest
+            imagePullPolicy: Never
+            command: ["/bin/sh"]
+            args: ["-c", "ls -la && python3 etl/daily_parser.py"]
+            volumeMounts:
+              - name: parser-data
+                mountPath: /app/data
+          restartPolicy: OnFailure
+          volumes:
+          - name: parser-data
+            persistentVolumeClaim:
+              claimName: parser-pvc

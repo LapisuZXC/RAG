@@ -12,12 +12,15 @@ def setup_selenium():
     # Фиксированный User-Agent (лучше использовать реальный)
     user_agent = UserAgent().random
     options.add_argument(f"user-agent={user_agent}")
-
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
     # Убираем автоматическое управление браузером
     options.add_argument("--disable-blink-features=AutomationControlled")
 
     # Запуск браузера
-    driver = uc.Chrome(options=options, headless=False)
+
+    options.binary_location = "/usr/bin/chromium"      # закоментить для локалки
+    driver = uc.Chrome(options=options, headless=True)
 
     # Убираем следы Selenium с помощью stealth
     stealth(

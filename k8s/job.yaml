@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: one-time-parser
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: parser
+        image: my-parser-app:latest
+        imagePullPolicy: Never
+        command: ["/bin/sh"]
+        args: ["-c", "ls -la && python3 etl/init_parser.py"]
+        volumeMounts:
+          - name: parser-data
+            mountPath: /app/data
+      volumes:
+        - name: parser-data
+          persistentVolumeClaim:
+            claimName: parser-pvc

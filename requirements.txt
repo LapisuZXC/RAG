@@ -149,7 +149,7 @@ trio-websocket==0.12.2
 typing_extensions==4.12.2
 tzdata==2025.1
 uc-micro-py==1.0.3
-undetected-chromedriver==3.5.5
+undetected-chromedriver==3.5.4
 universal_pathlib==0.2.6
 urllib3==2.3.0
 validators==0.34.0

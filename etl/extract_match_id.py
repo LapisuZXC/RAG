@@ -2,6 +2,9 @@ import pandas as pd
 import re
 
 
+from logger.logger import Loger
+log = Loger(__file__)
+
 def extract_match_id(url):
     """Извлекает ID матча из ссылки"""
     if isinstance(url, str):  # Проверяем, является ли url строкой
@@ -67,8 +70,15 @@ def modify_csv(input_file, team_file):
     df = df[columns_order]
 
     df.to_csv(input_file, index=False)
-    print(f"Файл обновлён: {input_file}")
+    log.prnt(f"Файл обновлён: {input_file}")
+
+
+
+def main():
+    log.prnt("Начали работу с файлом")
+    modify_csv("data/processed/matches.csv", "data/processed/unique_teams.csv")
+    log.prnt("Закончили работу с файлом")
 
 
 if __name__ == "__main__":
-    modify_csv("data/processed/matches.csv", "data/processed/unique_teams.csv")
+    main()
