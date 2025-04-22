@@ -1,13 +1,15 @@
-set -e # chmod -x deploy.sh           ./deploy.sh
+#!/bin/bash
+set -e
 
 APP_NAME="my-parser-app"
 NAMESPACE="default"
 DOCKERFILE_PATH="."
 TAG="latest"
 K8S_DIR="./k8s"
+JOB_NAME="one-time-parser"
 
 echo "==> Строим Docker образ..."
-eval $(minikube docker-env) # eval $(minikube docker-env -u) для возврата
+eval $(minikube docker-env)
 docker build -t $APP_NAME:$TAG $DOCKERFILE_PATH
 
 echo "==> Удаляем старые ресурсы..."
@@ -25,22 +27,48 @@ kubectl apply -f $K8S_DIR/deployment.yaml
 echo "==> Создаём Job..."
 kubectl apply -f $K8S_DIR/job.yaml
 
-echo "==> Ждём завершения начального Job..."
+echo "==> Ожидание создания пода Job..."
 
-# Ждём, пока Job выполнится успешно
+# Ждём пока под появится (обычно несколько секунд)
 while true; do
-  status=$(kubectl get job one-time-parser -o jsonpath='{.status.succeeded}')
-  if [ "$status" == "1" ]; then
-    echo "==> Job завершён успешно!"
+  pod_name=$(kubectl get pods --selector=job-name=$JOB_NAME -o jsonpath='{.items[*].metadata.name}' 2>/dev/null)
+  if [ -n "$pod_name" ]; then
+    echo "==> Найден под: $pod_name"
     break
   fi
-  echo "==> Job ещё не завершён, ждём..."
-  sleep 15
+  sleep 2
+done
+
+echo "==> Подключаемся к логам пода (stream)..."
+# Фоновый поток логов
+kubectl logs -f "$pod_name" &
+LOGS_PID=$!
+
+echo "==> Ожидаем завершения Job..."
+
+while true; do
+  status_succeeded=$(kubectl get job $JOB_NAME -o jsonpath='{.status.succeeded}' 2>/dev/null || echo "")
+  status_failed=$(kubectl get job $JOB_NAME -o jsonpath='{.status.failed}' 2>/dev/null || echo "")
+
+  if [ "$status_succeeded" == "1" ]; then
+    echo "✅ Job завершён успешно!"
+    kill $LOGS_PID 2>/dev/null || true
+    wait $LOGS_PID 2>/dev/null || true
+    break
+  elif [ "$status_failed" != "" ] && [ "$status_failed" != "0" ]; then
+    echo "❌ Job завершился с ошибкой!"
+    kill $LOGS_PID 2>/dev/null || true
+    wait $LOGS_PID 2>/dev/null || true
+    echo "🔻 Повторный вывод последних логов:"
+    kubectl logs "$pod_name"
+    exit 1
+  else
+    sleep 10
+  fi
 done
 
 echo "==> Создаём CronJob..."
 kubectl apply -f $K8S_DIR/cronjob.yaml
 
-echo "==> Всё, лафа кончилась, дальше сам :)"
+echo "==> Всё готово:"
 kubectl get all
-

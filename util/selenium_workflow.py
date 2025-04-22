@@ -4,15 +4,17 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from util.setup_selenium import setup_selenium
 
+
 class driver_context_manager(object):
     """
     Используем контекстный менеджер для гарантированного выхода из драйвера даже при возникновении ошибки.
     """
+
     def __enter__(self):
         self.driver = setup_selenium()
         print("setup driver")
         return self
-    
+
     def __exit__(self, typeExeption, value, traceback):
         self.driver.quit()
         print("quited driver")
@@ -30,10 +32,11 @@ def await_of_load(driver: webdriver, selector: str) -> bool:
     """
     try:
         WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+        )
         print("Таблица загружена.")
         return True
-    
+
     except Exception as e:
         print(f"Ошибка при загрузке таблицы: {e}")
 
