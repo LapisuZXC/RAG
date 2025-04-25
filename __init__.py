@@ -1,1 +1,1 @@
-# cd /mnt/e/My_projects/Uncompleted_projects/Proect_practikim_llm/RAG
+# cd /mnt/e/My_projects/Uncompleted_projects/RAG

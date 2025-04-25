@@ -56,17 +56,11 @@ def get_date_current() -> datetime:
     return current_data
 
 
-def generate_date_list(year_from: int, year_to: int) -> list[str]:
+def generate_date_list(start_date: int, end_date: int) -> list[str]:
     """
     Возвращает список всех дат в период с year_from до year_to в формате /год/месяц(наприме: march)/дата
     """
-    if year_from > year_to:
-        raise ValueError
-    
     date_list = []
-    start_date = datetime(year_from, 1, 1)
-    end_date = datetime(year_to, 12, 31)
-
     current_date = start_date
     while current_date <= end_date:
         date_list.append(f"/{current_date.year}/{current_date.strftime('%B').lower()}/{current_date.day}")
@@ -89,15 +83,14 @@ def generate_date_list_every_week(start_date: int, end_date: int) -> list[str]:
     return urls
 
 
-def generate_month_list(monthes: int) -> list[str]:
+def generate_month_list(start_date: int, end_date: int) -> list[str]:
     """
     Создаёт список месяцев в формате год/месяц (наприме: march)
     """
-    today = datetime.now()
     last_months = []
-    for i in range(0, monthes):
-        month_date = today - relativedelta(months=i)
-        month_str = month_date.strftime("%Y/%B").lower()
+    current_date = start_date
+    while current_date <= end_date:
+        month_str = current_date.strftime("%Y/%B").lower()
         last_months.append(month_str)
-
-    return last_months[::-1]
+        current_date += relativedelta(months=1)
+    return last_months

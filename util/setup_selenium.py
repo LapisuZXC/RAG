@@ -10,7 +10,13 @@ def setup_selenium():
     options = uc.ChromeOptions()
 
     # Фиксированный User-Agent (лучше использовать реальный)
-    user_agent = UserAgent().random
+    try:
+        user_agent = UserAgent().random
+    except Exception as e:
+        print(f"[WARNING] fake_useragent failed: {e}")
+        # Fallback на фиксированный user-agent
+        user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+    
     options.add_argument(f"user-agent={user_agent}")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -19,7 +25,7 @@ def setup_selenium():
 
     # Запуск браузера
 
-    options.binary_location = "/usr/bin/chromium"      # закоментить для локалки
+    #options.binary_location = "/usr/bin/chromium"      # закоментить для локалки
     driver = uc.Chrome(options=options, headless=True)
 
     # Убираем следы Selenium с помощью stealth
