@@ -1,9 +1,13 @@
+from selenium.common.exceptions import NoSuchElementException
 import argparse
 import os
+from typing import Optional
+
 import pandas as pd
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
-from util.selenium_workflow import driver_context_manager
+
+from util.selenium_workflow import await_of_load, driver_context_manager
 
 INPUT_CSV_PATH = "data/processed/matches_cleaned.csv"
 OUTPUT_CSV_PATH = "data/processed/series_results.csv"
@@ -12,24 +16,67 @@ SERIES_DIV_SELECTOR = ".columns"
 
 def prepare_dataframe(input_path: str) -> pd.DataFrame:
     df = pd.read_csv(input_path)
-    cols = ["team_id", "opponents_id", "date", "match_link"]
+    cols = ["team_id", "team_name", "opponents_id", "date", "match_link"]
     df2 = df[cols].copy()
     df2["series_link"] = None
     df2["series_result"] = None
     return df2
 
 
-def process_row(row: pd.Series, driver: uc.Chrome) -> pd.Series:
+def process_row(
+    row: pd.Series, driver: uc.Chrome, index: Optional[int] = None
+) -> pd.Series:
     link = row["match_link"]
     driver.get(link)
-    parent_element = driver.find_element(By.CSS_SELECTOR, SERIES_DIV_SELECTOR)
-    a = parent_element.find_element(By.CSS_SELECTOR, "a.col:nth-child(1)")
-    row["series_link"] = a.get_attribute("href")
-    row["series_result"] = parent_element.find_element(
-        By.CSS_SELECTOR,
-        "a.col:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
-    ).text.strip()
-    return row
+
+    try:
+        print("try bo3/bo5 logic")
+        parent_element = driver.find_element(
+            By.CSS_SELECTOR, SERIES_DIV_SELECTOR)
+        a = parent_element.find_element(By.CSS_SELECTOR, "a.col:nth-child(1)")
+        row["series_link"] = a.get_attribute("href")
+        row["series_result"] = parent_element.find_element(
+            By.CSS_SELECTOR,
+            "a.col:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+        ).text.strip()
+        print("bo3/bo5 успешно обработан")
+        return row
+
+    except NoSuchElementException as e:
+        print("bo3/bo5 не найден, пробуем bo1...", e)
+
+        try:
+            team_left = driver.find_element(By.CSS_SELECTOR, ".team-left")
+            team_left_name = team_left.find_element(By.TAG_NAME, "img").get_attribute(
+                "alt"
+            )
+            team_left_w_or_l = (
+                "W"
+                if team_left.find_element(By.TAG_NAME, "div").get_attribute("class")
+                == "bold won"
+                else "L"
+            )
+
+            match ((team_left_w_or_l == "W"), (team_left_name == row["team_name"])):
+                case (True, True):
+                    row["series_result"] = "1:0"
+                case (True, False):
+                    row["series_result"] = "0:1"
+                case (False, True):
+                    row["series_result"] = "0:1"
+                case (False, False):
+                    row["series_result"] = "1:0"
+
+            print("bo1 успешно обработан")
+            return row
+
+        except Exception as inner_e:
+            print("Ошибка при обработке bo1:", inner_e)
+            return row  # или пробросить ошибку, если нужно
+
+    except Exception as other:
+        print("Неизвестная ошибка при обработке:", other)
+        return row
 
 
 def main(test_mode: bool = False):
@@ -38,8 +85,8 @@ def main(test_mode: bool = False):
         with driver_context_manager() as driver_manager:
             driver = driver_manager.driver
             data = {
-                "team_id": ["heroic"],
-                "opponents_id": ["G2"],
+                "team_id": [6667],
+                "opponent_id": [5995],
                 "date": ["13/12/24"],
                 "match_link": [
                     "https://www.hltv.org/stats/matches/mapstatsid/189558/g2-vs-heroic"
@@ -82,16 +129,15 @@ def main(test_mode: bool = False):
                     "series_result": None,
                 }
                 row_series = pd.Series(extended_row)
-                result_row = process_row(row_series, driver)
+                result_row = process_row(row_series, driver, index)
 
-            # Сохраняем результат
-            pd.DataFrame([result_row]).to_csv(
-                OUTPUT_CSV_PATH,
-                mode="a",
-                header=not os.path.exists(OUTPUT_CSV_PATH)
-                or os.path.getsize(OUTPUT_CSV_PATH) == 0,
-                index=False,
-            )
+                pd.DataFrame([result_row]).to_csv(
+                    OUTPUT_CSV_PATH,
+                    mode="a",
+                    header=not os.path.exists(OUTPUT_CSV_PATH)
+                    or os.path.getsize(OUTPUT_CSV_PATH) == 0,
+                    index=False,
+                )
         except Exception as e:
             print(f"Ошибка при обработке строки {index}: {e}")
             print("Останавливаем парсинг. Вы можете перезапустить позже.")
