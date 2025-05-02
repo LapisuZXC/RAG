@@ -15,12 +15,12 @@ SERIES_DIV_SELECTOR = ".columns"
 
 
 def prepare_dataframe(input_path: str) -> pd.DataFrame:
-    df = pd.read_csv(input_path)
-    cols = ["team_id", "team_name", "opponents_id", "date", "match_link"]
-    df2 = df[cols].copy()
-    df2["series_link"] = None
-    df2["series_result"] = None
-    return df2
+    cols = ["team_id", "team_name", "opponent_id", "date", "match_link"]
+    df = pd.read_csv(input_path, usecols=cols)
+
+    df["series_link"] = None
+    df["series_result"] = None
+    return df
 
 
 def process_row(

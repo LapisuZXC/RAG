@@ -71,7 +71,7 @@ def extract_data(
                     )
                     child_element_hltv_points = parent_element.find_element(
                         By.CSS_SELECTOR,
-                        "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers > span.points",
+                        "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers > span.name",
                     )
                 position = child_element_position.text
                 team_name = child_element_team_name.text
@@ -88,15 +88,18 @@ def extract_data(
                     try:
                         cur_player = parent_element.find_element(
                             By.CSS_SELECTOR,
-                            f"div > div.lineup-con > table > tbody > tr > td:nth-child({i + 1}) > a",
+                            f"div > div.lineup-con > table > tbody > tr > td:nth-child({
+                                i + 1}) > a",
                         )
                     except:
                         cur_player = parent_element.find_element(
                             By.CSS_SELECTOR,
-                            f"div > div.lineup-con.hidden > table > tbody > tr > td:nth-child({i + 1}) > a",
+                            f"div > div.lineup-con.hidden > table > tbody > tr > td:nth-child({
+                                i + 1}) > a",
                         )
                     player_links.append(cur_player.get_attribute("href"))
-                    cur_player = cur_player.find_element(By.CSS_SELECTOR, "img")
+                    cur_player = cur_player.find_element(
+                        By.CSS_SELECTOR, "img")
                     player_names.append(cur_player.get_attribute("alt"))
 
                 # -----------------сохраняем данные-----------------------

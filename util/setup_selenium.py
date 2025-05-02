@@ -19,7 +19,7 @@ def setup_selenium():
 
     # Запуск браузера
 
-    options.binary_location = "/usr/bin/chromium"      # закоментить для локалки
+    options.binary_location = "/usr/bin/chromium"  # закоментить для локалки
     driver = uc.Chrome(options=options, headless=True)
 
     # Убираем следы Selenium с помощью stealth
@@ -35,4 +35,3 @@ def setup_selenium():
     )
 
     return driver
-
