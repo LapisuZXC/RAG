@@ -145,7 +145,31 @@ def process_team(team_id, team_name_raw, driver):
     df["team_name"] = df["team_name"].apply(lambda x: x.strip("[]'"))
     return df, team_name
 
-# --- Главная функция ---
+def walk_through_one(team_id, team_name_raw, parsed_teams_file, matches_file):
+    team_name_formatted = team_name_raw.replace(" ", "-").lower()
+    
+    parsed_teams = load_parsed_teams(parsed_teams_file)
+    if team_name_formatted in parsed_teams:
+        log.prnt(f"{team_name_formatted} уже обработан. Пропуск.")
+        return None  # Для main можно вернуть, что ничего не обновлялось
+
+    driver = setup_selenium()
+    try:
+        df_matches = load_existing_matches(matches_file)
+        df_new_matches, team_name_formatted = process_team(team_id, team_name_raw, driver)
+        df_matches = pd.concat([df_matches, df_new_matches], ignore_index=True)
+
+        df_matches.to_csv(matches_file, index=False)
+        save_parsed_team(parsed_teams_file, team_name_formatted)
+        log.prnt(f"{team_name_formatted} успешно обработан и сохранён.")
+        return df_new_matches  # Можно вернуть новые данные, если нужно
+    except Exception as e:
+        log.prnt(f"Ошибка при парсинге {team_name_formatted}: {e}")
+    finally:
+        driver.quit()
+
+    return None
+
 def main(test_mode=False):
     log.prnt("Начали работу с файлом")
 
@@ -153,40 +177,20 @@ def main(test_mode=False):
     parsed_teams_file = "data/processed/parsed_teams.txt"
     matches_file = "data/processed/matches.csv"
 
-    parsed_teams = load_parsed_teams(parsed_teams_file)
-    df_matches = load_existing_matches(matches_file)
-
-    
-
     for _, row in df_teams.iterrows():
-        driver = setup_selenium()
         team_id = row["team_id"]
         team_name_raw = row["team_name"]
-        team_name_formatted = team_name_raw.replace(" ", "-").lower()
 
-        if team_name_formatted in parsed_teams:
-            driver.quit()
-            continue
-
-        try:
-            df_new_matches, team_name_formatted = process_team(team_id, team_name_raw, driver)
-            df_matches = pd.concat([df_matches, df_new_matches], ignore_index=True)
-
-            # Сохраняем результаты
-            df_matches.to_csv(matches_file, index=False)
-            save_parsed_team(parsed_teams_file, team_name_formatted)
-            log.prnt(f"{team_name_formatted} успешно обработан и сохранён.")
-
-        except Exception as e:
-            log.prnt(f"Ошибка при парсинге {team_name_formatted}: {e}")
-
-        driver.quit()
+        walk_through_one(team_id, team_name_raw, parsed_teams_file, matches_file)
 
         if test_mode:
             break
 
-    
     log.prnt("Закончили работу с файлом")
+
+
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
