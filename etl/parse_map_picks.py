@@ -1,4 +1,6 @@
 import pandas as pd
+import os
+import argparse
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -9,6 +11,7 @@ from util.setup_selenium import setup_selenium
 from logger.logger import Loger
 log = Loger(__file__)
 
+PROCESSED_FILE = "data/processed/team_maps.csv"
 
 
 def parse_team_maps(team_id, team_name, driver):
@@ -72,43 +75,59 @@ def parse_team_maps(team_id, team_name, driver):
     return maps_data
 
 
-def main(TEST_MODE = False):
+
+def load_processed_ids():
+    if os.path.exists(PROCESSED_FILE):
+        try:
+            df = pd.read_csv(PROCESSED_FILE)
+            return set(df["team_id"].unique())
+        except Exception as e:
+            log.prnt(f"Ошибка при загрузке обработанных ID: {e}")
+            return set()
+    return set()
+
+def save_team_maps(team_maps):
+    df = pd.DataFrame(
+        team_maps,
+        columns=["team_id", "team_name", "map_name", "winrate", "pickrate", "banrate"],
+    )
+    df.to_csv(PROCESSED_FILE, mode='a', index=False, header=not os.path.exists(PROCESSED_FILE))
+
+def main(test_mode=False):
     log.prnt("Начали работу с файлом")
 
-    # Заменить на unique_teams.csv
     df_teams = pd.read_csv("data/processed/unique_teams.csv")
-    driver = setup_selenium()
+    processed_ids = load_processed_ids()
 
-    all_maps_data = []
+    driver = setup_selenium()
 
     for _, row in df_teams.iterrows():
         team_id = row["team_id"]
         team_name = row["team_name"]
 
+        if team_id in processed_ids:
+            log.prnt(f"Пропуск {team_name} (ID: {team_id}) — уже обработан")
+            continue
+
         log.prnt(f"Парсинг команды: {team_name} (ID: {team_id})")
 
         try:
             team_maps = parse_team_maps(team_id, team_name, driver)
-            all_maps_data.extend(team_maps)
+            save_team_maps(team_maps)
+            log.prnt(f"Данные для {team_name} сохранены.")
         except Exception as e:
             log.prnt(f"Ошибка при парсинге команды {team_name}: {e}")
-        
 
-        if TEST_MODE:
+        if test_mode:
             break
 
-
     driver.quit()
-
-    df_maps = pd.DataFrame(
-        all_maps_data,
-        columns=["team_id", "team_name", "map_name", "winrate", "pickrate", "banrate"],
-    )
-    df_maps.to_csv("data/processed/team_maps.csv", index=False)
-    log.prnt("Файл team_maps.csv успешно создан!")
-
     log.prnt("Закончили работу с файлом")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    # чтобы запустить модуль с флагом --test и это передало True в test_mode
+    parser.add_argument("--test", action="store_true", help="Run in test mode")
+    args = parser.parse_args()
+    main(test_mode=args.test)
