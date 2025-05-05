@@ -1,7 +1,6 @@
 from util.selenium_workflow import driver_context_manager, await_of_load
-from util.csv_workflow import write_links
 from util.datetime_util import get_date_current
-from etl.parse_teams_all import extract_data, data_csv_format, TABLE_SELECTOR
+from etl.parse_teams_all import extract_data, update_links, data_csv_format, TABLE_SELECTOR
 
 
 from logger.logger import Loger
@@ -35,7 +34,7 @@ def main(TEST_MODE = False):
         if isValid:
             log.prnt("Found data")
             cur_data = extract_data(str("1/" + current_data), driver)
-            write_links(output_file, cur_data, data_csv_format)
+            update_links(output_file, cur_data, data_csv_format)
         else:
             log.prnt("Cant find data")
 

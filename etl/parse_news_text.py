@@ -6,14 +6,17 @@ from util.selenium_workflow import driver_context_manager
 from util.csv_workflow import write_links, print_csv
 from typing import Dict, List, Union, Tuple
 from datetime import datetime
+import pandas as pd
+import os
 
 
 from logger.logger import Loger
 log = Loger(__file__)
 
 
-output_file = "data/raw/last_news_text.csv"
-input_file = "data/raw/news_links.txt"
+OUTPUT_CSV_PATH = "data/raw/last_news_text.csv"
+REQUIRED_CSV_PATH = "data/raw/news_links.csv"
+PROCESSED_CSV_PATH = "data/raw/news_links_processed.csv"
 
 data_csv_format = {
     "Year": [],
@@ -54,23 +57,13 @@ def extract_date_news(driver: webdriver) -> Tuple[int, str, int]:
             date_in_str = time_element.text
 
     except Exception as e:
+    # Если не смогли установить дату, то вводим следующие значения
+        date_in_str = "1-1-2000 01:01"
+        log.prnt(f"Error extracting data and time because of: {e}")
+        log.prnt("Will use reserv date!!!")
 
-
-<< << << < HEAD
-  # Если не смогли установить дату, то вводим следующие значения
-  date_in_str = "1-1-2000 01:01"
-   log.prnt(f"Error extracting data and time because of: {e}")
-    log.prnt("Will use reserv date!!!")
-
-== == == =
-  # Если не смогли установить дату, то вводим следующие значения
-  date_in_str = "1-1-2000 01:01"
-   print(f"Error extracting data and time because of: {e}")
-    print("Will use reserv date!!!")
-
->>>>>> > b3a5ed2(?)
-  date_object = datetime.strptime(date_in_str, "%d-%m-%Y %H:%M")
-   current_year = date_object.year
+    date_object = datetime.strptime(date_in_str, "%d-%m-%Y %H:%M")
+    current_year = date_object.year
     current_month = date_object.strftime("%B").lower()
     current_date = date_object.day
 
@@ -155,56 +148,67 @@ def get_all_data_from_news(
 
 def processing_one_news_item(link: str):
     """
-    Полная обработка и запись одной новости по ссылке
+    Полная обработка одной новости по ссылке
     """
     with driver_context_manager() as driver_manager:
         driver = driver_manager.driver
+        log.prnt(f"Getting data from: {link}")
+
+        driver.get(link)
+
+        isValid = await_of_load(driver, NEWS_TABLE_SELECTOR)
+        if isValid:
+            log.prnt("Found data")
+            cur_data = get_all_data_from_news(driver, link)
+            write_links(OUTPUT_CSV_PATH, cur_data, data_csv_format)
+        else:
+            log.prnt("Cant find data")
 
 
-<< << << < HEAD
 
-  log.prnt(f"Getting data from: {link}")
-== == == =
 
-  print(f"Getting data from: {link}")
->>>>>> > b3a5ed2(?)
-  driver.get(link)
+def read_links(required_file: str, processed_file: str) -> List[str]:
 
-   isValid = await_of_load(driver, NEWS_TABLE_SELECTOR)
-    if isValid:
-        log.prnt("Found data")
-        cur_data = get_all_data_from_news(driver, link)
-        write_links(output_file, cur_data, data_csv_format)
+    if not os.path.exists(required_file):
+        log.prnt(f"Cant find Links in {required_file}")
+        return []
+    
+
+    required_df = pd.read_csv(required_file)
+    required_links = set(required_df["link"])
+
+    if os.path.exists(processed_file):
+        proc_df = pd.read_csv(processed_file)
+        processed_links = set(proc_df["link"])
     else:
-        log.prnt("Cant find data")
+        processed_links = set()
+    
+    links = required_links - processed_links
 
+    return list(links)
 
-def read_links() -> list[str]:
-    try:
-        with open(input_file, "r") as file:
-            links = file.readlines()
-    except Exception as e:
-        log.prnt(f"Error in reading input_file: {input_file} --------- {e}")
-        links = []
-    return links
+def update_links(processed_file: str, links: List[str]) -> None:
+    if os.path.exists(processed_file):
+        pass
+    else:
+        empty_df = pd.DataFrame(columns=['link'])
+        empty_df.to_csv(processed_file, index=False)
+    
+    if isinstance(links, str):  # Если links — это строка
+        links = [links]
 
-
-<< << << < HEAD
-
+    data_frame = pd.DataFrame(links)
+    data_frame.to_csv(processed_file, mode="a", index=False, header=False)
+    
+    return None
 
 def main(TEST_MODE=False):
     log.prnt("Начали работу с файлом")
-
-
-== == == =
-def main():
-
-
->>>>>> > b3a5ed2(?)
-  links = read_links()
-   for link in links:
+    links = read_links(required_file=REQUIRED_CSV_PATH, processed_file=PROCESSED_CSV_PATH)
+    for link in links:
         try:
             processing_one_news_item(link)
+            update_links(PROCESSED_CSV_PATH, link)
         except Exception as e:
             log.prnt(f"Error in parsing the news with link: {
                      link} ------- {e}")
@@ -217,8 +221,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-<< <<<< < HEAD
-  #print_csv(output_file)
-== == ===
-  print_csv(output_file)
->>>>>> > b3a5ed2(?)
+    print_csv(OUTPUT_CSV_PATH)
