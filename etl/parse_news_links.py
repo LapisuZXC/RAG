@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from util.selenium_workflow import await_of_load, driver_context_manager
 from util.datetime_util import generate_month_list
 import pandas as pd
+import argparse
 from typing import Dict, List, Union
 
 from logger.logger import Loger
@@ -64,11 +65,11 @@ def append_csv(output_file: str, data: List[Dict[str, str]]) -> None:
     return None
 
 
-def main():
+def main(test_mode = False):
     log.prnt("Начали работу с файлом")
 
 
-    required_monthes = generate_month_list(3)
+    required_monthes = generate_month_list(2)
     links = []
 
     for current_month in required_monthes:
@@ -94,4 +95,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    # чтобы запустить модуль с флагом --test и это передало True в test_mode
+    parser.add_argument("--test", action="store_true", help="Run in test mode")
+    args = parser.parse_args()
+    main(test_mode=args.test)

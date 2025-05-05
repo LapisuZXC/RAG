@@ -7,6 +7,7 @@ from util.csv_workflow import write_links, print_csv
 from typing import Dict, List, Union, Tuple
 from datetime import datetime
 import pandas as pd
+import argparse
 import os
 
 
@@ -202,7 +203,7 @@ def update_links(processed_file: str, links: List[str]) -> None:
     
     return None
 
-def main(TEST_MODE=False):
+def main(test_mode=False):
     log.prnt("Начали работу с файлом")
     links = read_links(required_file=REQUIRED_CSV_PATH, processed_file=PROCESSED_CSV_PATH)
     for link in links:
@@ -213,12 +214,16 @@ def main(TEST_MODE=False):
             log.prnt(f"Error in parsing the news with link: {
                      link} ------- {e}")
 
-        if TEST_MODE:
+        if test_mode:
             break
 
     log.prnt("Закончили работу с файлом")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    # чтобы запустить модуль с флагом --test и это передало True в test_mode
+    parser.add_argument("--test", action="store_true", help="Run in test mode")
+    args = parser.parse_args()
+    main(test_mode=args.test)
     print_csv(OUTPUT_CSV_PATH)

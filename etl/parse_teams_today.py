@@ -1,7 +1,7 @@
 from util.selenium_workflow import driver_context_manager, await_of_load
 from util.datetime_util import get_date_current
 from etl.parse_teams_all import extract_data, update_links, data_csv_format, TABLE_SELECTOR
-
+import argparse
 
 from logger.logger import Loger
 log = Loger(__file__)
@@ -11,7 +11,7 @@ URL = 'https://www.hltv.org/ranking/teams'
 output_file = "data/raw/team_ranking.csv"
 
 
-def main(TEST_MODE = False):
+def main(test_mode = False):
     log.prnt("Начали работу с файлом")
 
     current_data = get_date_current()
@@ -22,7 +22,7 @@ def main(TEST_MODE = False):
         driver = driver_manager.driver
 
         
-        if TEST_MODE:
+        if test_mode:
             current_url = "https://www.hltv.org/ranking/teams/2025/april/14"
             current_data = "2025/april/14"
 
@@ -42,4 +42,8 @@ def main(TEST_MODE = False):
     log.prnt("Закончили работу с файлом")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    # чтобы запустить модуль с флагом --test и это передало True в test_mode
+    parser.add_argument("--test", action="store_true", help="Run in test mode")
+    args = parser.parse_args()
+    main(test_mode=args.test)
