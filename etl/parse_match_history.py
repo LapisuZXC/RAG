@@ -1,5 +1,6 @@
+import os
 import pandas as pd
-
+import argparse
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -63,54 +64,137 @@ def parse_team_matches(team_id, team_name, driver):
     return matches
 
 
-def main(TEST_MODE = False):
+# def main(test_mode = False):
+#     log.prnt("Начали работу с файлом")
+
+#     # Заменить на unique_teams.csv
+#     df_teams = pd.read_csv("data/processed/unique_teams.csv")
+#     driver = setup_selenium()
+
+#     all_matches = []
+
+#     for _, row in df_teams.iterrows():
+#         team_id = row["team_id"]
+#         team_name = row["team_name"].replace(" ", "-").lower()
+#         log.prnt(f"Парсим {team_name}...")
+
+#         try:
+#             matches = parse_team_matches(team_id, team_name, driver)
+#             all_matches.extend(matches)
+#         except Exception as e:
+#             log.prnt(f"Ошибка при парсинге {team_name}: {e}")
+        
+        
+#         if test_mode:
+#             break
+
+
+#     driver.quit()
+
+#     df_matches = pd.DataFrame(
+#         all_matches,
+#         columns=[
+#             "team_name",
+#             "date",
+#             "event",
+#             "opponent",
+#             "map",
+#             "result",
+#             "win_loss",
+#             "match_link",
+#         ],
+#     )
+
+#     # Убираем лишние символы из team_name
+#     df_matches["team_name"] = df_matches["team_name"].apply(lambda x: x.strip("[]'"))
+
+#     df_matches.to_csv("data/processed/matches.csv", index=False)
+#     log.prnt("Файл matches.csv успешно сохранён!")
+#     log.prnt("Закончили работу с файлом")
+
+# --- Загрузка уже обработанных команд ---
+def load_parsed_teams(filepath):
+    if os.path.exists(filepath):
+        with open(filepath, "r", encoding="utf-8") as f:
+            return set(line.strip() for line in f)
+    return set()
+
+# --- Сохранение имени успешно обработанной команды ---
+def save_parsed_team(filepath, team_name):
+    with open(filepath, "a", encoding="utf-8") as f:
+        f.write(team_name + "\n")
+
+# --- Загрузка уже собранных матчей (если есть) ---
+def load_existing_matches(filepath):
+    if os.path.exists(filepath):
+        return pd.read_csv(filepath)
+    return pd.DataFrame(columns=[
+        "team_name", "date", "event", "opponent", "map",
+        "result", "win_loss", "match_link"
+    ])
+
+# --- Обработка одной команды ---
+def process_team(team_id, team_name_raw, driver):
+    team_name = team_name_raw.replace(" ", "-").lower()
+    log.prnt(f"Парсим {team_name}...")
+    matches = parse_team_matches(team_id, team_name, driver)
+    df = pd.DataFrame(matches, columns=[
+        "team_name", "date", "event", "opponent", "map",
+        "result", "win_loss", "match_link"
+    ])
+    df["team_name"] = df["team_name"].apply(lambda x: x.strip("[]'"))
+    return df, team_name
+
+def walk_through_one(team_id, team_name_raw, parsed_teams_file, matches_file):
+    team_name_formatted = team_name_raw.replace(" ", "-").lower()
+    
+    parsed_teams = load_parsed_teams(parsed_teams_file)
+    if team_name_formatted in parsed_teams:
+        log.prnt(f"{team_name_formatted} уже обработан. Пропуск.")
+        return None  # Для main можно вернуть, что ничего не обновлялось
+
+    driver = setup_selenium()
+    try:
+        df_matches = load_existing_matches(matches_file)
+        df_new_matches, team_name_formatted = process_team(team_id, team_name_raw, driver)
+        df_matches = pd.concat([df_matches, df_new_matches], ignore_index=True)
+
+        df_matches.to_csv(matches_file, index=False)
+        save_parsed_team(parsed_teams_file, team_name_formatted)
+        log.prnt(f"{team_name_formatted} успешно обработан и сохранён.")
+        return df_new_matches  # Можно вернуть новые данные, если нужно
+    except Exception as e:
+        log.prnt(f"Ошибка при парсинге {team_name_formatted}: {e}")
+    finally:
+        driver.quit()
+
+    return None
+
+def main(test_mode=False):
     log.prnt("Начали работу с файлом")
 
-    # Заменить на unique_teams.csv
     df_teams = pd.read_csv("data/processed/unique_teams.csv")
-    driver = setup_selenium()
-
-    all_matches = []
+    parsed_teams_file = "data/processed/parsed_teams.txt"
+    matches_file = "data/processed/matches.csv"
 
     for _, row in df_teams.iterrows():
         team_id = row["team_id"]
-        team_name = row["team_name"].replace(" ", "-").lower()
-        log.prnt(f"Парсим {team_name}...")
+        team_name_raw = row["team_name"]
 
-        try:
-            matches = parse_team_matches(team_id, team_name, driver)
-            all_matches.extend(matches)
-        except Exception as e:
-            log.prnt(f"Ошибка при парсинге {team_name}: {e}")
-        
-        
-        if TEST_MODE:
+        walk_through_one(team_id, team_name_raw, parsed_teams_file, matches_file)
+
+        if test_mode:
             break
 
-
-    driver.quit()
-
-    df_matches = pd.DataFrame(
-        all_matches,
-        columns=[
-            "team_name",
-            "date",
-            "event",
-            "opponent",
-            "map",
-            "result",
-            "win_loss",
-            "match_link",
-        ],
-    )
-
-    # Убираем лишние символы из team_name
-    df_matches["team_name"] = df_matches["team_name"].apply(lambda x: x.strip("[]'"))
-
-    df_matches.to_csv("data/processed/matches.csv", index=False)
-    log.prnt("Файл matches.csv успешно сохранён!")
     log.prnt("Закончили работу с файлом")
 
 
+
+
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    # чтобы запустить модуль с флагом --test и это передало True в test_mode
+    parser.add_argument("--test", action="store_true", help="Run in test mode")
+    args = parser.parse_args()
+    main(test_mode=args.test)

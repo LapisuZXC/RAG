@@ -7,37 +7,47 @@ import pandas as pd
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 
-from util.selenium_workflow import await_of_load, driver_context_manager
+from util.selenium_workflow import driver_context_manager
 
 INPUT_CSV_PATH = "data/processed/matches_cleaned.csv"
 OUTPUT_CSV_PATH = "data/processed/series_results.csv"
 SERIES_DIV_SELECTOR = ".columns"
+SERIES_RESULT_SELECTOR = (
+    "a.col:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1)"
+)
 
 
 def prepare_dataframe(input_path: str) -> pd.DataFrame:
-    df = pd.read_csv(input_path)
+    """
+    Функция дял подготовки датафрейма чтобы потом создать csv.
+    Используется если не найдет уже созданный файл
+    """
     cols = ["team_id", "team_name", "opponent_id", "date", "match_link"]
-    df2 = df[cols].copy()
-    df2["series_link"] = None
-    df2["series_result"] = None
-    return df2
+    df = pd.read_csv(input_path, usecols=cols)
+
+    df["series_link"] = None
+    df["series_result"] = None
+    return df
 
 
 def process_row(
     row: pd.Series, driver: uc.Chrome, index: Optional[int] = None
 ) -> pd.Series:
+    """
+    Обрабатывай один ряд данных.
+    Возвращает готовый ряд который можно аппендить к файлу.
+    """
     link = row["match_link"]
     driver.get(link)
 
     try:
         print("try bo3/bo5 logic")
-        parent_element = driver.find_element(
-            By.CSS_SELECTOR, SERIES_DIV_SELECTOR)
+        parent_element = driver.find_element(By.CSS_SELECTOR, SERIES_DIV_SELECTOR)
         a = parent_element.find_element(By.CSS_SELECTOR, "a.col:nth-child(1)")
         row["series_link"] = a.get_attribute("href")
         row["series_result"] = parent_element.find_element(
             By.CSS_SELECTOR,
-            "a.col:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1)",
+            SERIES_RESULT_SELECTOR,
         ).text.strip()
         print("bo3/bo5 успешно обработан")
         return row
@@ -56,7 +66,7 @@ def process_row(
                 == "bold won"
                 else "L"
             )
-
+            # Логика для обработки бо1
             match ((team_left_w_or_l == "W"), (team_left_name == row["team_name"])):
                 case (True, True):
                     row["series_result"] = "1:0"
@@ -79,7 +89,7 @@ def process_row(
         return row
 
 
-def main(test_mode: bool = False):
+def main(test_mode: bool = False) -> None:
     if test_mode:
         print("TEST MODE IS ENABLED\nPROCESSING ONLY 1 ROW")
         with driver_context_manager() as driver_manager:
@@ -99,11 +109,10 @@ def main(test_mode: bool = False):
             print(result_row)
             return
 
-    # Загружаем данные
     if not os.path.exists(OUTPUT_CSV_PATH):
         print("Файл результатов не найден. Создаём с нуля...")
         df = prepare_dataframe(INPUT_CSV_PATH)
-        # Создаём пустой файл с заголовками
+        # Создаём пустой файл с заголовками (Возможно тут проблема)
         df.iloc[0:0].to_csv(OUTPUT_CSV_PATH, index=False)
         processed_links = set()
     else:
@@ -127,13 +136,13 @@ def main(test_mode: bool = False):
                     **row.to_dict(),
                     "series_link": None,
                     "series_result": None,
-                }
+                }  # потому что process_row ожидает в таком форате данные
                 row_series = pd.Series(extended_row)
                 result_row = process_row(row_series, driver, index)
 
                 pd.DataFrame([result_row]).to_csv(
                     OUTPUT_CSV_PATH,
-                    mode="a",
+                    mode="a",  # аппендить
                     header=not os.path.exists(OUTPUT_CSV_PATH)
                     or os.path.getsize(OUTPUT_CSV_PATH) == 0,
                     index=False,
@@ -146,6 +155,7 @@ def main(test_mode: bool = False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    # чтобы запустить модуль с флагом --test и это передало True в test_mode
     parser.add_argument("--test", action="store_true", help="Run in test mode")
     args = parser.parse_args()
     main(test_mode=args.test)

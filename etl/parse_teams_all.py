@@ -88,18 +88,15 @@ def extract_data(
                     try:
                         cur_player = parent_element.find_element(
                             By.CSS_SELECTOR,
-                            f"div > div.lineup-con > table > tbody > tr > td:nth-child({
-                                i + 1}) > a",
+                            f"div > div.lineup-con > table > tbody > tr > td:nth-child({i + 1}) > a",
                         )
                     except:
                         cur_player = parent_element.find_element(
                             By.CSS_SELECTOR,
-                            f"div > div.lineup-con.hidden > table > tbody > tr > td:nth-child({
-                                i + 1}) > a",
+                            f"div > div.lineup-con.hidden > table > tbody > tr > td:nth-child({i + 1}) > a",
                         )
                     player_links.append(cur_player.get_attribute("href"))
-                    cur_player = cur_player.find_element(
-                        By.CSS_SELECTOR, "img")
+                    cur_player = cur_player.find_element(By.CSS_SELECTOR, "img")
                     player_names.append(cur_player.get_attribute("alt"))
 
                 # -----------------сохраняем данные-----------------------

@@ -2,7 +2,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from util.selenium_workflow import await_of_load, driver_context_manager
 from util.datetime_util import generate_month_list
-
+import pandas as pd
+import argparse
+from typing import Dict, List, Union
 
 from logger.logger import Loger
 log = Loger(__file__)
@@ -10,39 +12,60 @@ log = Loger(__file__)
 
 
 URL = 'https://www.hltv.org/news/archive/'
-output_file = "data/raw/news_links.txt"
+OUTPUT_CSV_PATH = "data/raw/news_links.csv"
+
+
 
 TABLE_SELECTOR = "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol"
 # Селектор общей таблицы данных
 
+DATE_SELECTOR = f"body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.index > div:nth-child(4) > a:nth-child({13}) > div.newstc > div.newsrecent"
 
 
 def extract_links(driver: webdriver) -> list[str]:
     parent_selector = "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.index > div.standard-box.standard-list"
-    links = []
+    data = []
 
     try:
         link_elements = driver.find_elements(By.CSS_SELECTOR, f"{parent_selector} > a")
-        for link_element in link_elements:
-            link = link_element.get_attribute('href')
+        date_elements = driver.find_elements(By.CSS_SELECTOR, f"{parent_selector} > a > div.newstc > div.newsrecent")
+        for link_atr, date_atr in zip(link_elements, date_elements):
+            link = link_atr.get_attribute('href')
+            date = date_atr.text
             if link:
-                links.append(link)
+                data.append({"date": date, "link": link})
     except Exception as e:
         log.prnt(f"Error extracting links: {e}")
     
-    return links
-
-
-def write_links(output_file: str, data: {str}):
-    with open(output_file, 'w') as file:
-        for month in data:
-            for link in month:
-                file.write(link + '\n')
-    log.prnt(f"Data written to {output_file}")
+    return data
 
 
 
-def main():
+def append_csv(output_file: str, data: List[Dict[str, str]]) -> None:
+    import os
+
+    if os.path.exists(output_file):
+        processed_df = pd.read_csv(output_file)
+    else:
+        empty_df = pd.DataFrame(columns=['date', 'link'])
+        empty_df.to_csv(output_file, index=False)
+        processed_df = empty_df
+
+    data_frame = pd.DataFrame(data)
+
+    if not processed_df.empty:
+        data_frame = data_frame[~data_frame["link"].isin(processed_df["link"])]
+
+    if not data_frame.empty:
+        data_frame.to_csv(output_file, mode="a", index=False, header=False)
+        print(f"Добавлено {len(data_frame)} новых строк в {output_file}")
+    else:
+        print("Новых строк нет — ничего не добавлено.")
+    
+    return None
+
+
+def main(test_mode = False):
     log.prnt("Начали работу с файлом")
 
 
@@ -61,15 +84,19 @@ def main():
 
             if isValid:
                 log.prnt("Found data")
-                links.append(extract_links(driver))
+                links.extend(extract_links(driver))
             else:
                 log.prnt("Cant find data")
 
     log.prnt("Начинаем запись с помощью write_links")
-    write_links(output_file, links)
+    append_csv(output_file = OUTPUT_CSV_PATH, data = links)
 
     log.prnt("Закончили работу с файлом")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    # чтобы запустить модуль с флагом --test и это передало True в test_mode
+    parser.add_argument("--test", action="store_true", help="Run in test mode")
+    args = parser.parse_args()
+    main(test_mode=args.test)

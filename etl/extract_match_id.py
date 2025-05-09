@@ -3,7 +3,9 @@ import re
 
 
 from logger.logger import Loger
+
 log = Loger(__file__)
+
 
 def extract_match_id(url):
     """Извлекает ID матча из ссылки"""
@@ -71,7 +73,6 @@ def modify_csv(input_file, team_file):
 
     df.to_csv(input_file, index=False)
     log.prnt(f"Файл обновлён: {input_file}")
-
 
 
 def main():

@@ -56,16 +56,12 @@ def get_date_current() -> datetime:
     return current_data
 
 
-def generate_date_list(year_from: int, year_to: int) -> list[str]:
+def generate_date_list(start_date: datetime, end_date: datetime) -> list[str]:
     """
     Возвращает список всех дат в период с year_from до year_to в формате /год/месяц(наприме: march)/дата
     """
-    if year_from > year_to:
-        raise ValueError
     
     date_list = []
-    start_date = datetime(year_from, 1, 1)
-    end_date = datetime(year_to, 12, 31)
 
     current_date = start_date
     while current_date <= end_date:
@@ -73,6 +69,8 @@ def generate_date_list(year_from: int, year_to: int) -> list[str]:
         current_date += timedelta(days=1)
 
     return date_list
+
+
 
 def generate_date_list_every_week(start_date: int, end_date: int) -> list[str]:
     """

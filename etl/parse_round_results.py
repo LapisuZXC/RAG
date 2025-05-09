@@ -2,47 +2,18 @@ import pandas as pd
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-
+import os
+import argparse
 from util.setup_selenium import setup_selenium
-
+from typing import Tuple, Set
 
 from logger.logger import Loger
 log = Loger(__file__)
 
 
+PROCESSED_FILE = "data/processed/matches_parsed.csv"
+INPUT_FILE = "data/processed/matches.csv"
 
-#TODO Не работает
-"""
-
-
-Traceback (most recent call last):
-  File "<frozen runpy>", line 198, in _run_module_as_main
-  File "<frozen runpy>", line 88, in _run_code
-  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\etl\parse_round_results.py", line 58, in <module>
-    main()
-  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\etl\parse_round_results.py", line 52, in main
-    df_matches["round_1_win"], df_matches["round_15_win"] = zip(*round_results)
-    ~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\venv\Lib\site-packages\pandas\core\frame.py", line 4311, in __setitem__
-    self._set_item(key, value)
-  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\venv\Lib\site-packages\pandas\core\frame.py", line 4524, in _set_item
-    value, refs = self._sanitize_column(value)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\venv\Lib\site-packages\pandas\core\frame.py", line 5266, in _sanitize_column
-    com.require_length_match(value, self.index)
-  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\venv\Lib\site-packages\pandas\core\common.py", line 573, in require_length_match
-    raise ValueError(
-ValueError: Length of values (1) does not match length of index (365)
-Exception ignored in: <function Chrome.__del__ at 0x000002CAB4991BC0>
-Traceback (most recent call last):
-  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\venv\Lib\site-packages\undetected_chromedriver\__init__.py", line 843, in __del__
-  File "E:\My_projects\Uncompleted_projects\Proect_practikim_llm\RAG\venv\Lib\site-packages\undetected_chromedriver\__init__.py", line 798, in quit
-
-
-
-
-
-"""
 
 def parse_round_results(match_link, driver):
     """Парсит результаты раундов по указанной ссылке."""
@@ -70,31 +41,74 @@ def parse_round_results(match_link, driver):
     return round_1_win, round_13_win
 
 
-def main():
+def load_matches() -> Tuple[pd.DataFrame, Set[str], pd.DataFrame]:
+    """Загружает все матчи и возвращает: (df_matches, обработанные ссылки, df_processed)"""
+    if not os.path.exists(INPUT_FILE):
+        log.prnt(f"Ошибка, не нашли {INPUT_FILE}")
+        empty_df = pd.DataFrame()
+        return empty_df, set(), empty_df
+    
+    df_matches = pd.read_csv(INPUT_FILE)
+
+    if os.path.exists(PROCESSED_FILE):
+        df_processed = pd.read_csv(PROCESSED_FILE)
+        processed_links = set(df_processed["match_link"].unique())
+    else:
+        df_processed = pd.DataFrame(columns=list(df_matches.columns) + ["round_1_win", "round_15_win"])
+        processed_links = set()
+
+    return df_matches, processed_links, df_processed
+
+
+def save_processed_row(row: pd.Series) -> None:
+    """Сохраняет одну строку в файл обработанных матчей"""
+    header_needed = not os.path.exists(PROCESSED_FILE)
+    row.to_frame().T.to_csv(PROCESSED_FILE, mode="a", index=False, header=header_needed)
+
+
+def process_match(row: pd.Series, driver) -> pd.Series:
+    """Обрабатывает один матч и возвращает обновлённую строку"""
+    match_link = row["match_link"]
+    try:
+        round_1_win, round_13_win = parse_round_results(match_link, driver)
+        row["round_1_win"] = round_1_win
+        row["round_15_win"] = round_13_win
+        log.prnt(f"Успешно обработали {match_link}")
+    except Exception as e:
+        log.prnt(f"Ошибка при парсинге {match_link}: {e}")
+        row["round_1_win"] = None
+        row["round_15_win"] = None
+    return row
+
+
+def main(test_mode = False):
     log.prnt("Начали работу с файлом")
 
-    df_matches = pd.read_csv("data/processed/matches.csv")
+    df_matches, processed_links, _ = load_matches()
     driver = setup_selenium()
-
-    round_results = []
 
     for _, row in df_matches.iterrows():
         match_link = row["match_link"]
-        try:
-            round_1_win, round_13_win = parse_round_results(match_link, driver)
-            round_results.append((round_1_win, round_13_win))
-        except Exception as e:
-            log.prnt(f"Ошибка при парсинге {match_link}: {e}")
-            round_results.append((None, None))
-        break
+
+        if match_link in processed_links: # Скипаем обработанные ссылки
+            continue
+
+        updated_row = process_match(row, driver)
+        save_processed_row(updated_row)
+        processed_links.add(match_link)
+        if test_mode:
+            break
     driver.quit()
 
-    df_matches["round_1_win"], df_matches["round_15_win"] = zip(*round_results)
-    df_matches.to_csv("data/processed/matches.csv", index=False)
-    log.prnt("Файл matches.csv успешно обновлён!")
-
+    log.prnt("Файл matches_parsed.csv успешно обновлён!")
     log.prnt("Закончили работу с файлом")
 
 
+
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    # чтобы запустить модуль с флагом --test и это передало True в test_mode
+    parser.add_argument("--test", action="store_true", help="Run in test mode")
+    args = parser.parse_args()
+    main(test_mode=args.test)
