@@ -8,7 +8,7 @@ spec:
   accessModes:
     - ReadWriteMany
   hostPath:
-    path: /tmp/parser-data   # папка внешнего хранения
+    path: /home/lapisu/Desktop/RAG/data   # папка внешнего хранения
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
