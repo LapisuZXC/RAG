@@ -33,7 +33,9 @@ TABLE_SELECTOR = "body > div.bgPadding > div.widthControl > div:nth-child(2) > d
 # Селектор общей таблицы данных
 
 
-def extract_data(url: str, driver: webdriver) -> Dict[str, Union[str, int, List[Dict[str, str]]]]:
+def extract_data(
+    url: str, driver: webdriver
+) -> Dict[str, Union[str, int, List[Dict[str, str]]]]:
     _, cur_year, cur_month, cur_date = url.split("/")
     data = data_csv_format
 
@@ -69,7 +71,7 @@ def extract_data(url: str, driver: webdriver) -> Dict[str, Union[str, int, List[
 def get_team_blocks(driver: webdriver):
     return driver.find_elements(
         By.CSS_SELECTOR,
-        "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking > div:nth-child(1) > div"
+        "body > div.bgPadding > div.widthControl > div:nth-child(2) > div.contentCol > div.ranking > div:nth-child(1) > div",
     )
 
 
@@ -85,27 +87,27 @@ def extract_team_info(element) -> Dict[str, str]:
     try:
         name_elem = element.find_element(
             By.CSS_SELECTOR,
-            "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers.teamLineExpanded > span.name"
+            "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers.teamLineExpanded > span.name",
         )
         points_elem = element.find_element(
             By.CSS_SELECTOR,
-            "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers.teamLineExpanded > span.points"
+            "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers.teamLineExpanded > span.points",
         )
     except:
         name_elem = element.find_element(
             By.CSS_SELECTOR,
-            "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers > span.name"
+            "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers > span.name",
         )
         points_elem = element.find_element(
             By.CSS_SELECTOR,
-            "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers > span.name"
+            "div > div.ranking-header > div.relative > div.teamLine.sectionTeamPlayers > span.name",
         )
 
     return {
         "position": position,
         "team_name": name_elem.text,
         "hltv_points": points_elem.text,
-        "team_link": team_link
+        "team_link": team_link,
     }
 
 
@@ -120,12 +122,16 @@ def extract_players(element) -> Dict[str, str]:
         try:
             player_link = element.find_element(
                 By.CSS_SELECTOR,
-                f"div > div.lineup-con > table > tbody > tr > td:nth-child({i + 1}) > a"
+                f"div > div.lineup-con > table > tbody > tr > td:nth-child({
+                    i + 1
+                }) > a",
             )
         except:
             player_link = element.find_element(
                 By.CSS_SELECTOR,
-                f"div > div.lineup-con.hidden > table > tbody > tr > td:nth-child({i + 1}) > a"
+                f"div > div.lineup-con.hidden > table > tbody > tr > td:nth-child({
+                    i + 1
+                }) > a",
             )
 
         link = player_link.get_attribute("href")
@@ -137,10 +143,8 @@ def extract_players(element) -> Dict[str, str]:
     return players
 
 
-
-
 def get_required_links(output_file: str) -> List[str]:
-    #urls = generate_date_list_every_week(start_date, end_date)
+    # urls = generate_date_list_every_week(start_date, end_date)
 
     start_date = max(datetime(2023, 1, 2), get_last_date(output_file))
     log.prnt(f"Start parsing from {start_date}")
@@ -156,7 +160,7 @@ def get_required_links(output_file: str) -> List[str]:
             isValid = await_of_load(driver, TABLE_SELECTOR)
             if isValid:
                 log.prnt("Found valid link start parse every week")
-                urls = urls[ind::7] # начинаем искать каждую неделю
+                urls = urls[ind::7]  # начинаем искать каждую неделю
                 break
     return urls
 
@@ -164,7 +168,7 @@ def get_required_links(output_file: str) -> List[str]:
 def update_links(
     processed_file: str,
     data: Dict[str, Union[str, int, List[Dict[str, str]]]],
-    format: Dict[str, Union[str, int, List[Dict[str, str]]]] = data_csv_format
+    format: Dict[str, Union[str, int, List[Dict[str, str]]]] = data_csv_format,
 ) -> None:
     import os
 
@@ -176,29 +180,25 @@ def update_links(
         empty_df = pd.DataFrame(columns=format.keys())
         empty_df.to_csv(processed_file, index=False)
         processed_df = empty_df
-    
 
     try:
         data_frame = pd.DataFrame(data)
 
-        processed_df['Year'] = processed_df['Year'].astype(int)
-        data_frame['Year'] = data_frame['Year'].astype(int)
-        processed_df['Month'] = processed_df['Month'].astype(str)
-        data_frame['Month'] = data_frame['Month'].astype(str)
-        processed_df['Date'] = processed_df['Date'].astype(int)
-        data_frame['Date'] = data_frame['Date'].astype(int)
+        processed_df["Year"] = processed_df["Year"].astype(int)
+        data_frame["Year"] = data_frame["Year"].astype(int)
+        processed_df["Month"] = processed_df["Month"].astype(str)
+        data_frame["Month"] = data_frame["Month"].astype(str)
+        processed_df["Date"] = processed_df["Date"].astype(int)
+        data_frame["Date"] = data_frame["Date"].astype(int)
 
-        
         if not processed_df.empty:
-
             data_frame = data_frame.merge(
-                processed_df[key_columns],
-                on=key_columns,
-                how='left',
-                indicator=True
+                processed_df[key_columns], on=key_columns, how="left", indicator=True
             )
-            data_frame = data_frame[data_frame['_merge'] == 'left_only'].drop(columns=['_merge'])
-            #data_frame = data_frame[~data_frame["link"].isin(processed_df["link"])]
+            data_frame = data_frame[data_frame["_merge"] == "left_only"].drop(
+                columns=["_merge"]
+            )
+            # data_frame = data_frame[~data_frame["link"].isin(processed_df["link"])]
 
         if not data_frame.empty:
             data_frame.to_csv(processed_file, mode="a", index=False, header=False)
@@ -235,12 +235,12 @@ def one_iter_full_work(driver: webdriver, batch: List[str]):
 
 def main(test_mode=False):
     log.prnt("Начали работу с файлом")
-    valids = False 
+    valids = False
     batch_size = 90
 
     urls = get_required_links(OUTPUT_FILE)
     for i in range(0, len(urls), batch_size):
-        batch = urls[i:i + batch_size]
+        batch = urls[i : i + batch_size]
 
         with driver_context_manager() as driver_manager:
             driver = driver_manager.driver
@@ -249,8 +249,6 @@ def main(test_mode=False):
         if test_mode and valids:
             break
     log.prnt("Закончили работу с файлом")
-
-
 
 
 if __name__ == "__main__":

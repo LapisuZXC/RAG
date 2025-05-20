@@ -11,7 +11,7 @@ from logger.logger import Loger
 log = Loger(__file__)
 
 
-TEST_MODE = True
+TEST_MODE = False
 
 
 def create_data_dir():
